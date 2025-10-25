@@ -76,6 +76,21 @@ const ChallanGenerationForm = ({ availableMaterials, purchaseOrder, onClose, onS
       return;
     }
 
+    if (!purchaseOrder || !purchaseOrder.id) {
+      console.error('Purchase order data:', purchaseOrder);
+      toast.error('Purchase order information is missing', {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    console.log('Creating challan with data:', {
+      purchase_order_id: purchaseOrder.id,
+      materials: selectedMaterials,
+      purchaseOrder: purchaseOrder
+    });
+
     setIsSubmitting(true);
     try {
       const response = await post('/api/challans', {
@@ -1858,6 +1873,26 @@ export default function PurchaseOrderManagement() {
   const handleGenerateChallan = React.useCallback(async (purchaseOrderData) => {
     if (!canRead) return;
     
+    console.log('Generate challan called with data:', purchaseOrderData);
+    
+    if (!purchaseOrderData || !purchaseOrderData.id) {
+      console.error('Invalid purchase order data:', purchaseOrderData);
+      toast.error('Invalid purchase order data', {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+    
+    if (!purchaseOrderData.quotation || !purchaseOrderData.quotation.id) {
+      console.error('No quotation found for purchase order:', purchaseOrderData);
+      toast.error('This purchase order does not have a quotation. Cannot generate challan.', {
+        position: "top-right",
+        autoClose: 5000,
+      });
+      return;
+    }
+    
     setSelectedPurchaseOrderForChallan(purchaseOrderData);
     setLoadingMaterials(true);
     
@@ -2362,7 +2397,7 @@ export default function PurchaseOrderManagement() {
                   handleGenerateChallan(params.row);
                 }}
                 color="primary"
-                disabled={!params.row.quotation}
+                disabled={!params.row.quotation || !params.row.quotation.id}
               >
                 <LocalShipping />
               </IconButton>
