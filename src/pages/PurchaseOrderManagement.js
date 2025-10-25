@@ -563,10 +563,6 @@ export default function PurchaseOrderManagement() {
     ) {
       return;
     }
-    console.log('🔄 Applying date range:', {
-      oldRange: prev,
-      newRange: tempDateRange
-    });
     setAppliedDateRange({
       startDate: tempDateRange.startDate,
       endDate: tempDateRange.endDate,
@@ -614,24 +610,13 @@ export default function PurchaseOrderManagement() {
         apiUrl += `&${params.toString()}`;
       }
       
-      console.log('🔍 Searching purchase orders with URL:', apiUrl);
-      console.log('🔍 Search parameters:', {
-        purchaseOrderNo: searchParams.purchaseOrderNo,
-        customerName: searchParams.customerName,
-        status: searchParams.status,
-        startDate: dateRange.startDate,
-        endDate: dateRange.endDate
-      });
-      
       const response = await get(apiUrl);
-      console.log('✅ Search API response:', response);
       
       if (response.content && Array.isArray(response.content)) {
         setRowsState({
           rows: response.content,
           rowCount: response.totalElements || response.content.length,
         });
-        console.log('📊 Table updated with search results');
       } else if (Array.isArray(response)) {
         setRowsState({
           rows: response,
@@ -660,18 +645,13 @@ export default function PurchaseOrderManagement() {
   const loadCustomers = React.useCallback(async () => {
     setLoadingCustomers(true);
     try {
-      console.log('Loading customers...');
       const customerData = await get('/api/customers/all');
-      console.log('Customer data received:', customerData);
       
       if (Array.isArray(customerData)) {
-        console.log('Setting customers from array:', customerData);
         setCustomers(customerData);
       } else if (customerData.data && Array.isArray(customerData.data)) {
-        console.log('Setting customers from data property:', customerData.data);
         setCustomers(customerData.data);
       } else {
-        console.log('No valid customer data found, setting empty array');
         setCustomers([]);
       }
     } catch (error) {
@@ -694,15 +674,11 @@ export default function PurchaseOrderManagement() {
 
     setLoadingQuotations(true);
     try {
-      console.log('Loading quotations for customer ID:', customerId);
       const response = await get(`/api/quotations/customer/${customerId}`);
-      console.log('Quotations received:', response);
       
       if (response.success && response.quotations) {
-        console.log('Setting quotations:', response.quotations);
         setQuotations(response.quotations);
       } else {
-        console.log('No quotations found, setting empty array');
         setQuotations([]);
       }
     } catch (error) {
@@ -717,10 +693,39 @@ export default function PurchaseOrderManagement() {
     }
   }, [get]);
 
+  // Load individual quotation with materials
+  const loadQuotationWithMaterials = React.useCallback(async (quotationId) => {
+    if (!quotationId) return null;
+    
+    try {
+      const response = await get(`/api/quotations/${quotationId}`);
+      
+      // Check different possible response structures
+      let quotationData = null;
+      if (response.success && response.quotation) {
+        quotationData = response.quotation;
+      } else if (response.quotation) {
+        quotationData = response.quotation;
+      } else if (response.data && response.data.quotation) {
+        quotationData = response.data.quotation;
+      } else if (response.data) {
+        quotationData = response.data;
+      }
+      
+      if (quotationData) {
+        return quotationData;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error loading quotation with materials:', error);
+      return null;
+    }
+  }, [get]);
+
   // Load customers when modal opens
   React.useEffect(() => {
     if (modalOpen && (modalMode === 'create' || modalMode === 'edit')) {
-      console.log('Modal opened, loading customers...');
       if (user && token) {
         loadCustomers();
       }
@@ -730,7 +735,6 @@ export default function PurchaseOrderManagement() {
   // Load quotations when editing a purchase order with a customer
   React.useEffect(() => {
     if (modalOpen && modalMode === 'edit' && selectedPurchaseOrder && selectedPurchaseOrder.customer) {
-      console.log('Loading quotations for edit mode...');
       setCurrentModalCustomer(selectedPurchaseOrder.customer);
       loadQuotationsByCustomer(selectedPurchaseOrder.customer.id);
     } else if (modalOpen && modalMode === 'create') {
@@ -738,18 +742,32 @@ export default function PurchaseOrderManagement() {
       setCurrentModalCustomer(null);
       setQuotations([]);
     }
-  }, [modalOpen, modalMode, selectedPurchaseOrder, loadQuotationsByCustomer]);
+  }, [modalOpen, modalMode, selectedPurchaseOrder?.id, loadQuotationsByCustomer]);
+
+  // Handle quotation materials loading for edit mode
+  React.useEffect(() => {
+    if (modalOpen && modalMode === 'edit' && selectedPurchaseOrder?.quotation?.id) {
+      loadQuotationWithMaterials(selectedPurchaseOrder.quotation.id).then(fullQuotation => {
+        if (fullQuotation && fullQuotation.materials) {
+          setSelectedPurchaseOrder(prev => ({
+            ...prev,
+            quotation: fullQuotation
+          }));
+        }
+      }).catch(error => {
+        console.error('Error loading quotation materials:', error);
+      });
+    }
+  }, [modalOpen, modalMode, selectedPurchaseOrder?.quotation?.id, loadQuotationWithMaterials]);
 
   // Validation functions
   const validatePurchaseOrderNo = (purchaseOrderNo) => {
-    console.log('Validating purchase order no:', purchaseOrderNo);
     if (!purchaseOrderNo || purchaseOrderNo.trim() === '') return 'Purchase order number is required';
     if (purchaseOrderNo.length > 100) return 'Purchase order number must be 100 characters or less';
     return '';
   };
 
   const validateCustomer = (customer) => {
-    console.log('Validating customer:', customer);
     if (!customer) return 'Customer is required';
     return '';
   };
@@ -788,7 +806,6 @@ export default function PurchaseOrderManagement() {
 
     const handleCustomerSelect = (customer) => {
       if (isViewMode) return;
-      console.log('Selecting customer:', customer);
       setSelectedCustomer(customer);
       setCurrentModalCustomer(customer); // Update modal customer state
       onChange(customer);
@@ -1180,16 +1197,38 @@ export default function PurchaseOrderManagement() {
   // Custom Quotation Selection Component
   const QuotationSelectionComponent = ({ value, onChange, isViewMode, selectedCustomer }) => {
     const [selectedQuotation, setSelectedQuotation] = React.useState(value || null);
+    const [loadingQuotationDetails, setLoadingQuotationDetails] = React.useState(false);
 
     React.useEffect(() => {
       setSelectedQuotation(value || null);
     }, [value]);
 
-    const handleQuotationSelect = (quotation) => {
+    const handleQuotationSelect = async (quotation) => {
       if (isViewMode) return;
-      console.log('Selecting quotation:', quotation);
-      setSelectedQuotation(quotation);
-      onChange(quotation);
+      
+      // Check if quotation has materials, if not, fetch full details
+      if (quotation && (!quotation.materials || quotation.materials.length === 0)) {
+        setLoadingQuotationDetails(true);
+        try {
+          const fullQuotation = await loadQuotationWithMaterials(quotation.id);
+          if (fullQuotation) {
+            setSelectedQuotation(fullQuotation);
+            onChange(fullQuotation);
+          } else {
+            setSelectedQuotation(quotation);
+            onChange(quotation);
+          }
+        } catch (error) {
+          console.error('Error loading quotation details:', error);
+          setSelectedQuotation(quotation);
+          onChange(quotation);
+        } finally {
+          setLoadingQuotationDetails(false);
+        }
+      } else {
+        setSelectedQuotation(quotation);
+        onChange(quotation);
+      }
     };
 
     return (
@@ -1211,12 +1250,12 @@ export default function PurchaseOrderManagement() {
                 placeholder={selectedCustomer ? "Select a quotation..." : "Select a customer first"}
                 size="small"
                 fullWidth
-                disabled={!selectedCustomer}
+                disabled={!selectedCustomer || loadingQuotationDetails}
                 InputProps={{
                   ...params.InputProps,
                   endAdornment: (
                     <>
-                      {loadingQuotations && (
+                      {(loadingQuotations || loadingQuotationDetails) && (
                         <CircularProgress color="inherit" size={20} sx={{ mr: 1 }} />
                       )}
                       {params.InputProps.endAdornment}
@@ -1225,9 +1264,9 @@ export default function PurchaseOrderManagement() {
                 }}
               />
             )}
-            loading={loadingQuotations}
+            loading={loadingQuotations || loadingQuotationDetails}
             noOptionsText={!selectedCustomer ? "Please select a customer first" : quotations.length === 0 ? "No quotations found for this customer" : "No quotations available"}
-            disabled={!selectedCustomer}
+            disabled={!selectedCustomer || loadingQuotationDetails}
           />
         ) : (
           <TextField
@@ -1257,7 +1296,7 @@ export default function PurchaseOrderManagement() {
   };
 
   // Custom Materials Breakdown Component
-  const MaterialsBreakdownComponent = ({ quotation, isViewMode, onMaterialCostChange }) => {
+  const MaterialsBreakdownComponent = ({ quotation, isViewMode, onMaterialCostChange, purchaseOrderMaterialCosts }) => {
     const [materialCosts, setMaterialCosts] = React.useState({});
 
     // Initialize material costs
@@ -1265,8 +1304,10 @@ export default function PurchaseOrderManagement() {
       if (quotation && quotation.materials) {
         const initialCosts = {};
         quotation.materials.forEach((material, index) => {
-          // Check if we have saved material costs from the purchase order
-          if (material.actual_cost !== undefined) {
+          // First check if we have saved material costs from the purchase order
+          if (purchaseOrderMaterialCosts && purchaseOrderMaterialCosts[index] !== undefined) {
+            initialCosts[index] = purchaseOrderMaterialCosts[index];
+          } else if (material.actual_cost !== undefined) {
             initialCosts[index] = material.actual_cost;
           } else {
             initialCosts[index] = 0;
@@ -1274,7 +1315,7 @@ export default function PurchaseOrderManagement() {
         });
         setMaterialCosts(initialCosts);
       }
-    }, [quotation]);
+    }, [quotation, purchaseOrderMaterialCosts]);
 
     const handleCostChange = (index, value) => {
       const newCosts = { ...materialCosts, [index]: value };
@@ -1286,8 +1327,18 @@ export default function PurchaseOrderManagement() {
       }
     };
 
-    if (!quotation || !quotation.materials || quotation.materials.length === 0) {
+    if (!quotation) {
       return null;
+    }
+    
+    if (!quotation.materials || quotation.materials.length === 0) {
+      return (
+        <Box sx={{ mb: 2, p: 2, bgcolor: '#fff3cd', borderRadius: 1, border: '1px solid #ffeaa7' }}>
+          <Typography variant="body2" color="warning.main">
+            ⚠️ This quotation has no materials data. The materials breakdown cannot be displayed.
+          </Typography>
+        </Box>
+      );
     }
 
     const totalActualCost = Object.values(materialCosts).reduce((sum, cost) => sum + parseFloat(cost || 0), 0);
@@ -1482,11 +1533,11 @@ export default function PurchaseOrderManagement() {
       required: false,
       render: (value, onChange, isView, formData) => (
         <MaterialsBreakdownComponent 
+          key={`materials-${formData?.quotation?.id || 'no-quotation'}-${selectedPurchaseOrder?.id || 'new'}`}
           quotation={formData?.quotation}
           isViewMode={isView}
+          purchaseOrderMaterialCosts={materialCostsRef.current}
           onMaterialCostChange={(costs) => {
-            // Update the form data with material costs
-            console.log('Material costs changed:', costs);
             // Store the costs in a ref that can be accessed during form submission
             materialCostsRef.current = costs;
           }}
@@ -1604,7 +1655,6 @@ export default function PurchaseOrderManagement() {
         apiUrl += `&${params.toString()}`;
       }
       
-      console.log('🔄 Loading purchase orders with date range:', dateRange);
       const purchaseOrderData = await get(apiUrl);
       
       if (purchaseOrderData.content && Array.isArray(purchaseOrderData.content)) {
@@ -1660,7 +1710,6 @@ export default function PurchaseOrderManagement() {
 
   // Reload data when date range changes
   React.useEffect(() => {
-    console.log('🔄 Date range changed, reloading data:', appliedDateRange);
     const hasSearchCriteria = searchState.purchaseOrderNo || searchState.customerName || searchState.status;
     
     if (!hasSearchCriteria) {
@@ -1705,7 +1754,6 @@ export default function PurchaseOrderManagement() {
       }))
     };
     
-    console.log('Transformed data for view:', transformedData);
     setSelectedPurchaseOrder(transformedData);
     setModalMode('view');
     setModalOpen(true);
@@ -1734,12 +1782,10 @@ export default function PurchaseOrderManagement() {
   // Initialize material costs ref if we have saved material costs
   if (purchaseOrderData.material_costs) {
     materialCostsRef.current = purchaseOrderData.material_costs;
-    console.log('Initialized material costs for edit:', purchaseOrderData.material_costs);
   } else {
     materialCostsRef.current = {};
   }
   
-  console.log('Transformed data for edit:', transformedData);
   setSelectedPurchaseOrder(transformedData);
   setModalMode('edit');
   setModalOpen(true);
@@ -1793,7 +1839,6 @@ export default function PurchaseOrderManagement() {
 
   const handleCreate = React.useCallback(() => {
     if (!canCreate) return;
-    console.log('Creating purchase order modal...');
     
     // Clear material costs ref for new purchase order
     materialCostsRef.current = {};
@@ -1807,7 +1852,6 @@ export default function PurchaseOrderManagement() {
     });
     setModalMode('create');
     setModalOpen(true);
-    console.log('Modal should be open now');
   }, [canCreate]);
 
   // Challan generation handlers
@@ -1960,12 +2004,9 @@ export default function PurchaseOrderManagement() {
   }, []);
 
   const handleCustomerNameChange = React.useCallback((event, newValue) => {
-    console.log('🔄 Customer change triggered:', { newValue, type: typeof newValue });
-    
     if (newValue && typeof newValue === 'object') {
       // User selected from dropdown
       const customerName = newValue.customerName || '';
-      console.log('🎯 Customer selected from dropdown:', customerName);
       
       setSearchState(prev => ({ ...prev, customerName: customerName }));
       setPaginationModel(prev => ({ ...prev, page: 0 }));
@@ -1989,7 +2030,6 @@ export default function PurchaseOrderManagement() {
   const handleCustomerNameInputChange = React.useCallback((event, newInputValue) => {
     if (typeof newInputValue === 'string') {
       const trimmedValue = newInputValue.trim();
-      console.log('⌨️ Customer input change:', trimmedValue);
       
       // Update the input value in state
       setSearchState(prev => ({
@@ -2087,9 +2127,6 @@ export default function PurchaseOrderManagement() {
 
   // Handle modal submit
   const handleModalSubmit = async (formData) => {
-    console.log('Modal submit called with:', formData);
-    console.log('Modal mode:', modalMode);
-    
     if (modalMode === 'view') {
       setModalOpen(false);
       return;
@@ -2123,7 +2160,6 @@ export default function PurchaseOrderManagement() {
       // Add material costs if available
       const materialCosts = materialCostsRef.current;
       if (materialCosts && Object.keys(materialCosts).length > 0) {
-        console.log('Adding material costs to form data:', materialCosts);
         submitFormData.append('material_costs', JSON.stringify(materialCosts));
       }
       
