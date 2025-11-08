@@ -1774,15 +1774,50 @@ export default function PurchaseOrderManagement() {
     setModalOpen(true);
   }, [canRead]);
 
- const handleEdit = React.useCallback((purchaseOrderData) => {
+ const handleEdit = React.useCallback(async (purchaseOrderData) => {
   if (!canUpdate) return;
+  
+  // Get customers list (load if needed)
+  let customersList = customers;
+  if (customersList.length === 0) {
+    try {
+      const customerData = await get('/api/customers/all');
+      if (Array.isArray(customerData)) {
+        customersList = customerData;
+        setCustomers(customerData); // Update state for future use
+      } else if (customerData.data && Array.isArray(customerData.data)) {
+        customersList = customerData.data;
+        setCustomers(customerData.data); // Update state for future use
+      }
+    } catch (error) {
+      console.error('Error loading customers in handleEdit:', error);
+    }
+  }
+  
+  // Convert customer string to customer object if needed
+  let customerObject = null;
+  if (purchaseOrderData.customer && purchaseOrderData.customer !== 'undefined') {
+    if (typeof purchaseOrderData.customer === 'string') {
+      // Customer is a string (customer name), find the matching customer object
+      const matchingCustomer = customersList.find(c => 
+        c.customerName === purchaseOrderData.customer ||
+        `${c.customerName}${c.companyName ? ` (${c.companyName})` : ''}` === purchaseOrderData.customer
+      );
+      customerObject = matchingCustomer || null;
+      
+      if (!customerObject) {
+        console.warn('Could not find customer object for:', purchaseOrderData.customer);
+      }
+    } else if (typeof purchaseOrderData.customer === 'object' && purchaseOrderData.customer !== null) {
+      // Customer is already an object
+      customerObject = purchaseOrderData.customer;
+    }
+  }
   
   // Transform the data to handle "undefined" customer values and files
   const transformedData = {
     ...purchaseOrderData,
-    customer: purchaseOrderData.customer && purchaseOrderData.customer !== 'undefined' 
-      ? purchaseOrderData.customer 
-      : null,
+    customer: customerObject,
     purchase_order_files: (purchaseOrderData.files || []).map(file => ({
       id: file.id,
       name: file.file_name, // This is the key change - map file_name to name
@@ -1804,7 +1839,7 @@ export default function PurchaseOrderManagement() {
   setSelectedPurchaseOrder(transformedData);
   setModalMode('edit');
   setModalOpen(true);
-}, [canUpdate]);
+}, [canUpdate, customers, get]);
   const handleDelete = React.useCallback((purchaseOrderData) => {
     if (!canDelete) return;
     setPurchaseOrderToDelete(purchaseOrderData);
@@ -2187,8 +2222,38 @@ export default function PurchaseOrderManagement() {
       // Prepare FormData for file upload
       const submitFormData = new FormData();
       submitFormData.append('purchase_order_no', formData.purchase_order_no.trim());
-      submitFormData.append('customer', formData.customer?.customerName || '');
-      submitFormData.append('customer_id', formData.customer?.id || '');
+      
+      // Handle customer - could be object or string
+      let customerId = '';
+      let customerName = '';
+      if (formData.customer) {
+        if (typeof formData.customer === 'object' && formData.customer !== null) {
+          // Customer is an object
+          customerId = formData.customer.id || '';
+          customerName = formData.customer.customerName || '';
+        } else if (typeof formData.customer === 'string') {
+          // Customer is a string, try to find it in customers list
+          customerName = formData.customer;
+          const matchingCustomer = customers.find(c => 
+            c.customerName === formData.customer ||
+            `${c.customerName}${c.companyName ? ` (${c.companyName})` : ''}` === formData.customer
+          );
+          customerId = matchingCustomer?.id || '';
+          
+          if (!customerId) {
+            console.warn('Could not find customer ID for:', formData.customer);
+            toast.error('Customer ID not found. Please reselect the customer.', {
+              position: "top-right",
+              autoClose: 3000,
+            });
+            setIsLoading(false);
+            return;
+          }
+        }
+      }
+      
+      submitFormData.append('customer', customerName);
+      submitFormData.append('customer_id', customerId);
       submitFormData.append('description', formData.description || '');
       submitFormData.append('status', formData.status);
       submitFormData.append('quotation_id', formData.quotation ? formData.quotation.id : '');

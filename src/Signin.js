@@ -31,16 +31,26 @@ const Card = styled(MuiCard)(({ theme }) => ({
   padding: theme.spacing(4),
   gap: theme.spacing(2),
   margin: 'auto',
-  backgroundColor: '#ffffff', // Ensure card background is white
+  backgroundColor: '#ffffff !important', // Force white background
+  color: '#333333 !important', // Force dark text
   [theme.breakpoints.up('sm')]: {
     maxWidth: '450px',
   },
   boxShadow:
     'hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px',
+  // Force text colors for common text elements
+  '& p, & h1, & h2, & h3, & h4, & h5, & h6, & span, & label': {
+    color: '#333333 !important',
+  },
   ...theme.applyStyles('dark', {
-    backgroundColor: '#ffffff', // Force white background even in dark mode
+    backgroundColor: '#ffffff !important', // Force white background even in dark mode
+    color: '#333333 !important', // Force dark text in dark mode
     boxShadow:
       'hsla(220, 30%, 5%, 0.5) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.08) 0px 15px 35px -5px',
+    // Force text colors for common text elements in dark mode
+    '& p, & h1, & h2, & h3, & h4, & h5, & h6, & span, & label': {
+      color: '#333333 !important',
+    },
   }),
 }));
 
@@ -48,7 +58,8 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
   height: 'calc((1 - var(--template-frame-height, 0)) * 100dvh)',
   minHeight: '100%',
   padding: theme.spacing(2),
-  backgroundColor: '#ffffff', // White background
+  backgroundColor: '#ffffff !important', // Force white background
+  color: '#333333 !important', // Force dark text
   [theme.breakpoints.up('sm')]: {
     padding: theme.spacing(4),
   },
@@ -58,11 +69,11 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
     position: 'absolute',
     zIndex: -1,
     inset: 0,
-    backgroundColor: '#ffffff', // White background
+    backgroundColor: '#ffffff !important', // Force white background
     backgroundImage: 'none', // Remove gradient
     backgroundRepeat: 'no-repeat',
     ...theme.applyStyles('dark', {
-      backgroundColor: '#ffffff', // Force white background in dark mode too
+      backgroundColor: '#ffffff !important', // Force white background in dark mode too
       backgroundImage: 'none',
     }),
   },
@@ -229,7 +240,9 @@ export default function SignIn(props) {
           justifyContent="center" 
           alignItems="center"
         >
-          <Typography variant="h6" sx={{ color: '#333' }}>Checking authentication...</Typography>
+          <Typography variant="h6" sx={{ color: '#333333 !important' }}>
+            Checking authentication...
+          </Typography>
         </SignInContainer>
       </AppTheme>
     );
@@ -248,7 +261,8 @@ export default function SignIn(props) {
             sx={{ 
               width: '100%', 
               fontSize: 'clamp(2rem, 10vw, 2.15rem)',
-              color: '#333' // Dark text for contrast on white background
+              color: '#333333 !important', // Force dark text for contrast on white background
+              fontWeight: 'bold'
             }}
           >
             Sign in
@@ -265,7 +279,16 @@ export default function SignIn(props) {
             }}
           >
             <FormControl>
-              <FormLabel htmlFor="email" sx={{ color: '#333' }}>Email or Username</FormLabel>
+              <FormLabel 
+                htmlFor="email" 
+                sx={{ 
+                  color: '#333333 !important',
+                  fontWeight: 500,
+                  mb: 1
+                }}
+              >
+                Email or Username
+              </FormLabel>
               <TextField
                 error={emailError}
                 helperText={emailErrorMessage}
@@ -282,13 +305,42 @@ export default function SignIn(props) {
                 disabled={isLoading}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    backgroundColor: '#ffffff',
-                  }
+                    backgroundColor: '#ffffff !important',
+                    color: '#333333 !important',
+                    '& fieldset': {
+                      borderColor: emailError ? '#d32f2f' : 'rgba(0, 0, 0, 0.23)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: emailError ? '#d32f2f' : 'rgba(0, 0, 0, 0.87)',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: emailError ? '#d32f2f' : '#1976d2',
+                    },
+                  },
+                  '& .MuiInputBase-input': {
+                    color: '#333333 !important',
+                    '&::placeholder': {
+                      color: 'rgba(0, 0, 0, 0.5) !important',
+                      opacity: 1,
+                    },
+                  },
+                  '& .MuiFormHelperText-root': {
+                    color: emailError ? '#d32f2f' : 'rgba(0, 0, 0, 0.6) !important',
+                  },
                 }}
               />
             </FormControl>
             <FormControl>
-              <FormLabel htmlFor="password" sx={{ color: '#333' }}>Password</FormLabel>
+              <FormLabel 
+                htmlFor="password" 
+                sx={{ 
+                  color: '#333333 !important',
+                  fontWeight: 500,
+                  mb: 1
+                }}
+              >
+                Password
+              </FormLabel>
               <TextField
                 error={passwordError}
                 helperText={passwordErrorMessage}
@@ -304,8 +356,28 @@ export default function SignIn(props) {
                 disabled={isLoading}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    backgroundColor: '#ffffff',
-                  }
+                    backgroundColor: '#ffffff !important',
+                    color: '#333333 !important',
+                    '& fieldset': {
+                      borderColor: passwordError ? '#d32f2f' : 'rgba(0, 0, 0, 0.23)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: passwordError ? '#d32f2f' : 'rgba(0, 0, 0, 0.87)',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: passwordError ? '#d32f2f' : '#1976d2',
+                    },
+                  },
+                  '& .MuiInputBase-input': {
+                    color: '#333333 !important',
+                    '&::placeholder': {
+                      color: 'rgba(0, 0, 0, 0.5) !important',
+                      opacity: 1,
+                    },
+                  },
+                  '& .MuiFormHelperText-root': {
+                    color: passwordError ? '#d32f2f' : 'rgba(0, 0, 0, 0.6) !important',
+                  },
                 }}
               />
             </FormControl>
@@ -335,7 +407,17 @@ export default function SignIn(props) {
               Forgot your password?
             </Link>
           </Box>
-          <Divider sx={{ color: '#666' }}>Diamond Paints</Divider>
+          <Divider sx={{ 
+            color: '#666666 !important',
+            '&::before, &::after': {
+              borderColor: 'rgba(0, 0, 0, 0.12) !important',
+            },
+            '& .MuiDivider-wrapper': {
+              color: '#666666 !important',
+            }
+          }}>
+            Diamond Paints
+          </Divider>
         </Card>
         
         {/* React Toastify Container */}

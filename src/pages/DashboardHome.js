@@ -279,6 +279,7 @@ const DashboardHome = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = React.useState(false);
   const [summary, setSummary] = React.useState(null);
+  const [error, setError] = React.useState(null);
   const [isApplying] = React.useTransition();
 
   const [appliedDateRange, setAppliedDateRange] = React.useState(() => {
@@ -332,6 +333,7 @@ const DashboardHome = () => {
 
   const fetchSummary = React.useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams();
       if (appliedDateRange.startDate)
@@ -342,6 +344,18 @@ const DashboardHome = () => {
       setSummary((prev) =>
         JSON.stringify(prev) === JSON.stringify(data) ? prev : data
       );
+    } catch (error) {
+      console.error('Error fetching dashboard summary:', error);
+      setError('Failed to load dashboard data. Please try again.');
+      // Set default empty summary on error to prevent crashes
+      setSummary({
+        range: { startDate: appliedDateRange.startDate, endDate: appliedDateRange.endDate },
+        invoices: { total: 0, paid: 0, unpaid: 0 },
+        purchaseOrders: { received: 0, pending: 0 },
+        amounts: { purchaseOrders: { received: 0, pending: 0 } },
+        expenses: { amount: 0 },
+        salaries: { amount: 0 }
+      });
     } finally {
       setLoading(false);
     }
@@ -408,6 +422,22 @@ const DashboardHome = () => {
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
         Dashboard Overview
       </Typography>
+
+      {error && (
+        <Box sx={{ mb: 2, p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
+          <Typography color="error" sx={{ mb: 1 }}>
+            {error}
+          </Typography>
+          <Button 
+            variant="outlined" 
+            size="small" 
+            onClick={fetchSummary}
+            disabled={loading}
+          >
+            Retry
+          </Button>
+        </Box>
+      )}
 
       <DateRangeControls
         tempDateRange={tempDateRange}
