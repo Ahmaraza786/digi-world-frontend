@@ -452,7 +452,7 @@ export default function MaterialManagement() {
         width: 120,
         renderCell: (params) => (
           <Typography variant="body2">
-            ${params.value?.toFixed(2) || '0.00'}
+            PKR {params.value?.toFixed(2) || '0.00'}
           </Typography>
         ),
       },
