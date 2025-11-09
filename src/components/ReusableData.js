@@ -6,6 +6,7 @@ import {
   IconButton,
   Stack,
   Tooltip,
+  CircularProgress,
 } from '@mui/material';
 import {
   DataGrid,
@@ -19,6 +20,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import GetAppIcon from '@mui/icons-material/GetApp';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { GridToolbar } from '@mui/x-data-grid/internals';
 const INITIAL_PAGE_SIZE = 10;
@@ -48,9 +50,12 @@ const ReusableDataTable = ({
   onEdit = null,
   onDelete = null,
   onExport = null,
+  onDownload = null,
   onViewPdf = null,
   onCreate = null,
   onRefresh = null,
+  exportingQuotationId = null, // ID of quotation being exported
+  downloadingInvoiceId = null, // ID of invoice being downloaded
   
   // Row interaction
   onRowClick = null,
@@ -74,13 +79,13 @@ const ReusableDataTable = ({
   const enhancedColumns = React.useMemo(() => {
     const baseColumns = columns.map(column => ({
       ...column,
-      // Ensure other columns can flex to fill available space
-      flex: column.field !== 'actions' ? 1 : undefined,
+      // Ensure other columns can flex to fill available space, but respect existing flex values
+      flex: column.flex !== undefined ? column.flex : (column.field !== 'actions' ? 1 : undefined),
       minWidth: column.minWidth || 100, // Add minimum width for other columns
     }));
     
     // Add actions column if any action handlers are provided
-    if (onView || onEdit || onDelete || onExport || onViewPdf) {
+    if (onView || onEdit || onDelete || onExport || onDownload || onViewPdf) {
       const actionsColumn = {
         field: 'actions',
         type: 'actions',
@@ -128,12 +133,27 @@ const ReusableDataTable = ({
           }
           
           if (onExport) {
+            const isExporting = exportingQuotationId === row.id || downloadingInvoiceId === row.id;
             actions.push(
               <GridActionsCellItem
                 key="export-item"
-                icon={<FileDownloadIcon />}
-                label="Export"
-                onClick={() => onExport(row)}
+                icon={isExporting ? <CircularProgress size={20} /> : <FileDownloadIcon />}
+                label={isExporting ? "Exporting..." : "Export PDF"}
+                onClick={() => !isExporting && onExport(row)}
+                disabled={isExporting}
+              />
+            );
+          }
+          
+          if (onDownload) {
+            const isDownloading = downloadingInvoiceId === row.id;
+            actions.push(
+              <GridActionsCellItem
+                key="download-pdf-item"
+                icon={isDownloading ? <CircularProgress size={20} /> : <GetAppIcon />}
+                label={isDownloading ? "Downloading PDF..." : "Download PDF"}
+                onClick={() => !isDownloading && onDownload(row)}
+                disabled={isDownloading}
               />
             );
           }
@@ -157,7 +177,7 @@ const ReusableDataTable = ({
     }
     
     return baseColumns;
-  }, [columns, onView, onEdit, onDelete, onExport, onViewPdf]);
+  }, [columns, onView, onEdit, onDelete, onExport, onDownload, onViewPdf, exportingQuotationId, downloadingInvoiceId]);
 
   const initialState = React.useMemo(
     () => ({

@@ -56,6 +56,7 @@ export default function QuotationManagement() {
 
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
+  const [exportingQuotationId, setExportingQuotationId] = React.useState(null);
   
   // Modal state
   const [modalOpen, setModalOpen] = React.useState(false);
@@ -666,7 +667,7 @@ export default function QuotationManagement() {
                 </Grid>
                 <Grid item xs={6} sm={2}>
                   <Typography variant="body2" fontWeight="bold" color="primary">
-                    Total: PKR {(material?.quantity || 0) * (material?.unit_price || 0)}
+                    Total: PKR {((material?.quantity || 0) * (material?.unit_price || 0)).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                   </Typography>
                 </Grid>
                 <Grid item xs={6} sm={1}>
@@ -694,7 +695,7 @@ export default function QuotationManagement() {
         {selectedMaterials.length > 0 && (
           <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1, textAlign: 'center' }}>
             <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
-              Total Price: PKR {calculateTotalPrice(selectedMaterials)}
+              Total Price: PKR {calculateTotalPrice(selectedMaterials).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
             </Typography>
           </Box>
         )}
@@ -988,13 +989,26 @@ export default function QuotationManagement() {
     try {
       console.log('Exporting quotation:', quotationData);
       
+      // Set loading state
+      setExportingQuotationId(quotationData.id);
+      
       // Create a download link
       const exportUrl = `${BASE_URL}/api/export/quotation/${quotationData.id}`;
+      
+      // Generate filename with title + timestamp
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5); // Format: YYYY-MM-DDTHH-MM-SS
+      const title = quotationData.title || 'quotation';
+      // Sanitize title: remove invalid filename characters and replace spaces with underscores
+      const sanitizedTitle = title
+        .replace(/[<>:"/\\|?*]/g, '') // Remove invalid characters
+        .replace(/\s+/g, '_') // Replace spaces with underscores
+        .substring(0, 50); // Limit length to 50 characters
+      const filename = `${sanitizedTitle}_${timestamp}.pdf`;
       
       // Create a temporary anchor element to trigger download
       const link = document.createElement('a');
       link.href = exportUrl;
-      link.download = `quotation-${quotationData.id}.pdf`;
+      link.download = filename;
       
       // Add authorization header by using fetch first
       const response = await fetch(exportUrl, {
@@ -1052,6 +1066,9 @@ export default function QuotationManagement() {
         pauseOnHover: true,
         draggable: true,
       });
+    } finally {
+      // Clear loading state
+      setExportingQuotationId(null);
     }
   }, [token]);
 
@@ -1330,9 +1347,28 @@ export default function QuotationManagement() {
         width: 180,
       },
       {
+        field: 'customerCompanyName',
+        headerName: 'Company Name',
+        width: 200,
+        valueGetter: (value, row) => {
+          return row?.customer?.companyName || 'N/A';
+        },
+        renderCell: (params) => {
+          const companyName = params.row?.customer?.companyName;
+          return (
+            <Typography variant="body2" sx={{ 
+              fontStyle: companyName ? 'normal' : 'italic',
+              color: companyName ? 'text.primary' : 'text.secondary'
+            }}>
+              {companyName || 'N/A'}
+            </Typography>
+          );
+        },
+      },
+      {
         field: 'materials',
         headerName: 'Materials',
-        width: 200,
+        width: 100,
         renderCell: (params) => (
           <Typography variant="body2">
             {params.value?.length || 0} item(s)
@@ -1343,11 +1379,16 @@ export default function QuotationManagement() {
         field: 'totalPrice',
         headerName: 'Total Price',
         width: 120,
-        renderCell: (params) => (
-          <Typography variant="body2" fontWeight="bold" color="primary">
-            PKR {params.value || 0}
-          </Typography>
-        ),
+        renderCell: (params) => {
+          const formattedPrice = typeof params.value === 'number' 
+            ? params.value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+            : (params.value ? Number(params.value).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : '0');
+          return (
+            <Typography variant="body2" fontWeight="bold" color="primary">
+              PKR {formattedPrice}
+            </Typography>
+          );
+        },
       },
       {
         field: 'status',
@@ -1660,6 +1701,7 @@ export default function QuotationManagement() {
         onEdit={canUpdate ? handleEdit : null}
         onDelete={canDelete ? handleDelete : null}
         onExport={handleExport}
+        exportingQuotationId={exportingQuotationId}
         onViewPdf={canRead ? handleViewPdf : null}
         onCreate={canCreate ? handleCreate : null}
         onRefresh={canRead ? handleRefresh : null}

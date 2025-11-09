@@ -66,6 +66,7 @@ export default function InvoiceManagement() {
 
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = React.useState(null);
   
   // Modal state
   const [modalOpen, setModalOpen] = React.useState(false);
@@ -2482,6 +2483,12 @@ const PurchaseOrderSelectionComponent = React.memo(({
     if (!canRead) return;
     
     try {
+      // Set loading state
+      setDownloadingInvoiceId(invoiceData.id);
+      
+      // Fetch full invoice data to get quotation title
+      const fullInvoiceData = await get(`/api/invoices/${invoiceData.id}`);
+      
       const response = await fetch(`${BASE_URL}/api/generate/invoice/${invoiceData.id}`, {
         method: 'GET',
         headers: {
@@ -2494,12 +2501,28 @@ const PurchaseOrderSelectionComponent = React.memo(({
         throw new Error('Failed to generate invoice');
       }
 
+      // Generate filename with quotation title + "_invoice_" + timestamp
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5); // Format: YYYY-MM-DDTHH-MM-SS
+      
+      // Get quotation title from full invoice data
+      const quotationTitle = fullInvoiceData?.purchaseOrder?.quotation?.title || 
+                             fullInvoiceData?.quotation?.title || 
+                             'invoice';
+      
+      // Sanitize title: remove invalid filename characters and replace spaces with underscores
+      const sanitizedTitle = quotationTitle
+        .replace(/[<>:"/\\|?*]/g, '') // Remove invalid characters
+        .replace(/\s+/g, '_') // Replace spaces with underscores
+        .substring(0, 50); // Limit length to 50 characters
+      
+      const filename = `${sanitizedTitle}_invoice_${timestamp}.pdf`;
+
       // Create blob and download
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `invoice-${invoiceData.id}.pdf`;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -2523,8 +2546,12 @@ const PurchaseOrderSelectionComponent = React.memo(({
         pauseOnHover: true,
         draggable: true,
       });
+    } finally {
+      // Clear loading state
+      setDownloadingInvoiceId(null);
     }
-  }, [canRead, token]);
+  }, [canRead, token, get]);
+
 
   const handleViewPdf = React.useCallback(async (invoiceData) => {
     try {
@@ -2844,16 +2871,46 @@ const PurchaseOrderSelectionComponent = React.memo(({
         field: 'description',
         headerName: 'Description',
         width: 200,
-        renderCell: (params) => (
-          <Typography variant="body2" sx={{ 
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            maxWidth: '180px'
-          }}>
-            {params.value || 'No description'}
-          </Typography>
-        ),
+        renderCell: (params) => {
+          const quotationTitle = params.row?.purchaseOrder?.quotation?.title || 
+                                 params.row?.quotation?.title || 
+                                 null;
+          const description = params.value || '';
+          
+          return (
+            <Box sx={{ maxWidth: '180px' }}>
+              {quotationTitle && (
+                <Typography variant="body2" sx={{ 
+                  fontWeight: 'bold',
+                  mb: 0.5
+                }}>
+                  {quotationTitle}
+                </Typography>
+              )}
+              {description && (
+                <Typography variant="body2" sx={{ 
+                  fontSize: '0.75rem',
+                  color: 'text.secondary',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical'
+                }}>
+                  {description}
+                </Typography>
+              )}
+              {!quotationTitle && !description && (
+                <Typography variant="body2" sx={{ 
+                  fontStyle: 'italic',
+                  color: 'text.secondary'
+                }}>
+                  No description
+                </Typography>
+              )}
+            </Box>
+          );
+        },
       },
       {
         field: 'with_hold_tax',
@@ -3178,7 +3235,8 @@ const PurchaseOrderSelectionComponent = React.memo(({
         onDelete={canDelete ? handleDelete : null}
         onCreate={canCreate ? handleCreate : null}
         onRefresh={canRead ? handleRefresh : null}
-        onExport={canRead ? handleDownloadInvoice : null}
+        onDownload={canRead ? handleDownloadInvoice : null}
+        downloadingInvoiceId={downloadingInvoiceId}
         onViewPdf={canRead ? handleViewPdf : null}
         
         // Row interaction
