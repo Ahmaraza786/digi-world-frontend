@@ -327,7 +327,7 @@ export default function SalaryManagement() {
     loadExpenses();
   }, [selectedMonth, selectedYear]);
 
-  // Update salary entry
+  // Update salary entry (marks finalized salaries as needing re-finalization)
   const handleUpdateSalary = async (salaryId, field, value) => {
     if (!canUpdate) return;
     
@@ -338,7 +338,9 @@ export default function SalaryManagement() {
       const updateData = {
         basic_salary: field === 'basic_salary' ? parseFloat(value) : salary.basic_salary,
         bonus: field === 'bonus' ? parseFloat(value) : salary.bonus,
-        deductions: field === 'deductions' ? parseFloat(value) : salary.deductions
+        deductions: field === 'deductions' ? parseFloat(value) : salary.deductions,
+        // If editing a finalized salary, mark it as pending (needs re-finalization)
+        is_finalized: salary.is_finalized ? false : false
       };
 
       await put(`/api/employee-salaries/${salaryId}`, updateData);
@@ -357,38 +359,45 @@ export default function SalaryManagement() {
         )
       }));
 
-      toast.success('Salary updated successfully', {
+      const statusMessage = salary.is_finalized 
+        ? 'Salary updated. Click "Re-Finalize" to apply changes.' 
+        : 'Salary updated successfully';
+      
+      toast.warning(statusMessage, {
         position: "top-right",
-        autoClose: 2000,
+        autoClose: 3000,
       });
     } catch (error) {
-      toast.error('Failed to update salary', {
+      const errorMessage = error.response?.data?.error || 'Failed to update salary';
+      toast.error(errorMessage, {
         position: "top-right",
         autoClose: 5000,
       });
     }
   };
 
-  // Finalize salaries
+  // Finalize or Re-finalize salaries
   const handleFinalizeSalaries = async () => {
     if (!canUpdate) return;
     
     setIsLoading(true);
     try {
-      await post('/api/employee-salaries/finalize', {
+      const response = await post('/api/employee-salaries/finalize', {
         month: selectedMonth,
         year: selectedYear
       });
 
-      toast.success(`Finalized salaries for ${selectedMonth}/${selectedYear}`, {
+      // Display the message from backend with finalization details
+      toast.success(response.message || `Finalized salaries for ${selectedMonth}/${selectedYear}`, {
         position: "top-right",
-        autoClose: 3000,
+        autoClose: 4000,
       });
 
       setIsFinalized(true);
       loadSalaries();
     } catch (error) {
-      toast.error('Failed to finalize salaries', {
+      const errorMessage = error.response?.data?.error || 'Failed to finalize salaries';
+      toast.error(errorMessage, {
         position: "top-right",
         autoClose: 5000,
       });
@@ -415,7 +424,7 @@ export default function SalaryManagement() {
     setSelectedSalary(null);
   };
 
-  // Handle edit modal submit
+  // Handle edit modal submit (marks finalized salaries as needing re-finalization)
   const handleEditModalSubmit = async (formData) => {
     if (!canUpdate || !selectedSalary) return;
     
@@ -423,7 +432,9 @@ export default function SalaryManagement() {
       const updateData = {
         basic_salary: parseFloat(formData.basic_salary),
         bonus: parseFloat(formData.bonus),
-        deductions: parseFloat(formData.deductions)
+        deductions: parseFloat(formData.deductions),
+        // If editing a finalized salary, mark it as pending (needs re-finalization)
+        is_finalized: selectedSalary.is_finalized ? false : false
       };
 
       await put(`/api/employee-salaries/${selectedSalary.id}`, updateData);
@@ -436,20 +447,26 @@ export default function SalaryManagement() {
             ? { 
                 ...s, 
                 ...updateData,
-                net_salary: updateData.basic_salary + updateData.bonus - updateData.deductions
+                net_salary: updateData.basic_salary + updateData.bonus - updateData.deductions,
+                is_finalized: updateData.is_finalized
               }
             : s
         )
       }));
 
-      toast.success('Salary updated successfully', {
+      const statusMessage = selectedSalary.is_finalized 
+        ? 'Salary updated. Click "Re-Finalize" button to apply changes!' 
+        : 'Salary updated successfully';
+      
+      toast.warning(statusMessage, {
         position: "top-right",
-        autoClose: 2000,
+        autoClose: 3500,
       });
 
       handleEditModalClose();
     } catch (error) {
-      toast.error('Failed to update salary', {
+      const errorMessage = error.response?.data?.error || 'Failed to update salary';
+      toast.error(errorMessage, {
         position: "top-right",
         autoClose: 5000,
       });
@@ -940,11 +957,12 @@ export default function SalaryManagement() {
       {
         field: 'basic_salary',
         headerName: 'Basic Salary',
-        width: 130,
+        width: 180,
         align: 'left',
         headerAlign: 'left',
         renderCell: (params) => (
-          <Box
+          <Typography 
+            variant="body2" 
             sx={{ 
               display: 'flex', 
               alignItems: 'center', 
@@ -952,27 +970,19 @@ export default function SalaryManagement() {
               lineHeight: 1.5
             }}
           >
-            <TextField
-              type="number"
-              value={params.value}
-              onChange={(e) => handleUpdateSalary(params.row.id, 'basic_salary', e.target.value)}
-              size="small"
-              InputProps={{
-                startAdornment: <InputAdornment position="start">PKR</InputAdornment>
-              }}
-              sx={{ width: 120 }}
-            />
-          </Box>
+            PKR {params.value ? parseFloat(params.value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
+          </Typography>
         ),
       },
       {
         field: 'bonus',
         headerName: 'Bonus',
-        width: 120,
+        width: 170,
         align: 'left',
         headerAlign: 'left',
         renderCell: (params) => (
-          <Box
+          <Typography 
+            variant="body2" 
             sx={{ 
               display: 'flex', 
               alignItems: 'center', 
@@ -980,27 +990,19 @@ export default function SalaryManagement() {
               lineHeight: 1.5
             }}
           >
-            <TextField
-              type="number"
-              value={params.value}
-              onChange={(e) => handleUpdateSalary(params.row.id, 'bonus', e.target.value)}
-              size="small"
-              InputProps={{
-                startAdornment: <InputAdornment position="start">PKR</InputAdornment>
-              }}
-              sx={{ width: 100 }}
-            />
-          </Box>
+            PKR {params.value ? parseFloat(params.value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
+          </Typography>
         ),
       },
       {
         field: 'deductions',
         headerName: 'Deductions',
-        width: 130,
+        width: 180,
         align: 'left',
         headerAlign: 'left',
         renderCell: (params) => (
-          <Box
+          <Typography 
+            variant="body2" 
             sx={{ 
               display: 'flex', 
               alignItems: 'center', 
@@ -1008,23 +1010,14 @@ export default function SalaryManagement() {
               lineHeight: 1.5
             }}
           >
-            <TextField
-              type="number"
-              value={params.value}
-              onChange={(e) => handleUpdateSalary(params.row.id, 'deductions', e.target.value)}
-              size="small"
-              InputProps={{
-                startAdornment: <InputAdornment position="start">PKR</InputAdornment>
-              }}
-              sx={{ width: 100 }}
-            />
-          </Box>
+            PKR {params.value ? parseFloat(params.value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
+          </Typography>
         ),
       },
       {
         field: 'net_salary',
         headerName: 'Net Salary',
-        width: 130,
+        width: 180,
         align: 'left',
         headerAlign: 'left',
         renderCell: (params) => (
@@ -1045,26 +1038,33 @@ export default function SalaryManagement() {
       {
         field: 'is_finalized',
         headerName: 'Status',
-        width: 120,
+        width: 180,
         align: 'left',
         headerAlign: 'left',
-        renderCell: (params) => (
-          <Box
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              height: '100%',
-              lineHeight: 1.5
-            }}
-          >
-            <Chip 
-              label={params.value ? 'Finalized' : 'Pending'} 
-              variant="outlined" 
-              size="small"
-              color={params.value ? 'success' : 'warning'}
-            />
-          </Box>
-        ),
+        renderCell: (params) => {
+          // Check if any salary in this month is finalized
+          const hasAnyFinalized = rowsState.rows.some(s => s.is_finalized);
+          // If month has finalized salaries and this one is not finalized, it needs re-finalization
+          const needsRefinalize = hasAnyFinalized && !params.value;
+          
+          return (
+            <Box
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                height: '100%',
+                lineHeight: 1.5
+              }}
+            >
+              <Chip 
+                label={needsRefinalize ? 'Modified - Needs Re-Finalize' : params.value ? 'Finalized' : 'Pending'} 
+                variant="outlined" 
+                size="small"
+                color={needsRefinalize ? 'error' : params.value ? 'success' : 'warning'}
+              />
+            </Box>
+          );
+        },
       },
       {
         field: 'actions',
@@ -1074,30 +1074,54 @@ export default function SalaryManagement() {
         headerAlign: 'center',
         sortable: false,
         filterable: false,
-        renderCell: (params) => (
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              height: '100%',
-              gap: 1 
-            }}
-          >
-            <Tooltip title="Edit Salary">
-              <IconButton
-                size="small"
-                color="primary"
-                onClick={() => handleEditSalary(params.row)}
-              >
-                <Edit fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        ),
+        renderCell: (params) => {
+          const hasAnyFinalized = rowsState.rows.some(s => s.is_finalized);
+          const needsRefinalize = hasAnyFinalized && !params.row.is_finalized;
+          const tooltipText = needsRefinalize 
+            ? "Edit Modified Salary (Needs Re-Finalize)" 
+            : params.row.is_finalized 
+              ? "Edit Finalized Salary" 
+              : "Edit Salary";
+          
+          return (
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                height: '100%',
+                gap: 1 
+              }}
+            >
+              <Tooltip title={tooltipText}>
+                <IconButton
+                  size="small"
+                  color="primary"
+                  onClick={() => handleEditSalary(params.row)}
+                  sx={{
+                    bgcolor: needsRefinalize 
+                      ? 'error.light' 
+                      : params.row.is_finalized 
+                        ? 'success.light' 
+                        : 'transparent',
+                    '&:hover': {
+                      bgcolor: needsRefinalize 
+                        ? 'error.main' 
+                        : params.row.is_finalized 
+                          ? 'success.main' 
+                          : 'action.hover'
+                    }
+                  }}
+                >
+                  <Edit fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          );
+        },
       },
     ],
-    [handleUpdateSalary],
+    [rowsState.rows],
   );
 
   const pageTitle = 'Salary Management';
@@ -1227,16 +1251,39 @@ export default function SalaryManagement() {
             </Grid>
             
             <Grid item xs={12} sm={2}>
-              <Button
-                variant="outlined"
-                color="success"
-                onClick={handleFinalizeSalaries}
-                disabled={isLoading || !canUpdate || !salariesGenerated}
-                startIcon={isLoading ? <CircularProgress size={20} /> : <CheckCircle />}
-                fullWidth
-              >
-                {isLoading ? 'Finalizing...' : isFinalized ? 'Re-Finalize Salaries' : 'Finalize Salaries'}
-              </Button>
+              {(() => {
+                const hasAnyFinalized = rowsState.rows.some(s => s.is_finalized);
+                const needsRefinalization = hasAnyFinalized && rowsState.rows.some(s => !s.is_finalized);
+                
+                return (
+                  <Button
+                    variant="outlined"
+                    color={needsRefinalization ? "error" : "success"}
+                    onClick={handleFinalizeSalaries}
+                    disabled={isLoading || !canUpdate || !salariesGenerated}
+                    startIcon={isLoading ? <CircularProgress size={20} /> : <CheckCircle />}
+                    fullWidth
+                    sx={{ 
+                      fontWeight: needsRefinalization || isFinalized ? 'bold' : 'normal',
+                      borderWidth: needsRefinalization || isFinalized ? 2 : 1,
+                      animation: needsRefinalization ? 'pulse 2s infinite' : 'none',
+                      '@keyframes pulse': {
+                        '0%': {
+                          boxShadow: '0 0 0 0 rgba(255, 0, 0, 0.7)'
+                        },
+                        '70%': {
+                          boxShadow: '0 0 0 10px rgba(255, 0, 0, 0)'
+                        },
+                        '100%': {
+                          boxShadow: '0 0 0 0 rgba(255, 0, 0, 0)'
+                        }
+                      }
+                    }}
+                  >
+                    {isLoading ? 'Finalizing...' : needsRefinalization ? '⚠️ Re-Finalize Now!' : isFinalized ? 'Re-Finalize' : 'Finalize Salaries'}
+                  </Button>
+                );
+              })()}
             </Grid>
             
             {/* Export Buttons */}
@@ -1372,6 +1419,26 @@ export default function SalaryManagement() {
         </CardContent>
       </Card>
 
+      {/* Alert for salaries needing re-finalization */}
+      {(() => {
+        const hasAnyFinalized = salariesGenerated && rowsState.rows.some(s => s.is_finalized);
+        const needsRefinalization = hasAnyFinalized && rowsState.rows.some(s => !s.is_finalized);
+        const modifiedCount = hasAnyFinalized ? rowsState.rows.filter(s => !s.is_finalized).length : 0;
+        
+        return needsRefinalization && (
+          <Alert severity="error" sx={{ mb: 3, fontWeight: 'bold' }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
+              ⚠️ Action Required: Modified Salaries Detected
+            </Typography>
+            <Typography variant="body2">
+              You have {modifiedCount} salary(ies) that were modified. 
+              These changes are saved but <strong>NOT yet effective</strong>. 
+              Please click the <strong>"Re-Finalize"</strong> button above to apply all changes!
+            </Typography>
+          </Alert>
+        );
+      })()}
+
       {/* Search Components */}
       {canRead && salariesGenerated && (
         <Box sx={{ mb: 3 }}>
@@ -1494,10 +1561,40 @@ export default function SalaryManagement() {
         fullWidth
       >
         <DialogTitle>
-          Edit Salary - {selectedSalary?.employee?.name || 'N/A'}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>Edit Salary - {selectedSalary?.employee?.name || 'N/A'}</span>
+            {selectedSalary?.is_finalized && (
+              <Chip 
+                label="Finalized" 
+                color="success" 
+                size="small" 
+                variant="outlined"
+              />
+            )}
+          </Box>
         </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
+            {(() => {
+              const hasAnyFinalized = rowsState.rows.some(s => s.is_finalized);
+              const isCurrentlyFinalized = selectedSalary?.is_finalized;
+              const needsRefinalize = hasAnyFinalized && !isCurrentlyFinalized;
+              
+              return (
+                <>
+                  {isCurrentlyFinalized && (
+                    <Alert severity="warning" sx={{ mb: 2 }}>
+                      <strong>Warning:</strong> This salary is finalized. After saving changes, you <strong>MUST click the "Re-Finalize" button</strong> to make your changes effective!
+                    </Alert>
+                  )}
+                  {needsRefinalize && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                      <strong>This salary was modified!</strong> Click the "Re-Finalize" button to apply changes.
+                    </Alert>
+                  )}
+                </>
+              );
+            })()}
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <TextField
@@ -1568,8 +1665,17 @@ export default function SalaryManagement() {
             onClick={() => handleEditModalSubmit(selectedSalary)}
             variant="contained"
             disabled={!selectedSalary}
+            color={(() => {
+              const hasAnyFinalized = rowsState.rows.some(s => s.is_finalized);
+              const needsRefinalize = hasAnyFinalized || selectedSalary?.is_finalized;
+              return needsRefinalize ? 'warning' : 'primary';
+            })()}
           >
-            Save Changes
+            {(() => {
+              const hasAnyFinalized = rowsState.rows.some(s => s.is_finalized);
+              const needsRefinalize = hasAnyFinalized || selectedSalary?.is_finalized;
+              return needsRefinalize ? 'Save Changes (Requires Re-Finalize)' : 'Save Changes';
+            })()}
           </Button>
         </DialogActions>
       </Dialog>
