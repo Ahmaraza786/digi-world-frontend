@@ -2340,17 +2340,41 @@ export default function PurchaseOrderManagement() {
         field: 'id', 
         headerName: 'ID',
         width: 70,
+        align: 'left',
+        headerAlign: 'left',
+        renderCell: (params) => (
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
+            {params.value}
+          </Typography>
+        ),
       },
       {
         field: 'purchase_order_no',
         headerName: 'PO Number',
         width: 150,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <Typography variant="body2" sx={{ 
-            fontWeight: params.value ? 'bold' : 'normal',
-            fontStyle: params.value ? 'normal' : 'italic',
-            color: params.value ? 'text.primary' : 'text.secondary'
-          }}>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5,
+              fontWeight: params.value ? 'bold' : 'normal',
+              fontStyle: params.value ? 'normal' : 'italic',
+              color: params.value ? 'text.primary' : 'text.secondary'
+            }}
+          >
             {params.value || 'No PO Number'}
           </Typography>
         ),
@@ -2359,21 +2383,62 @@ export default function PurchaseOrderManagement() {
         field: 'customer',
         headerName: 'Customer',
         width: 180,
+        align: 'left',
+        headerAlign: 'left',
+        renderCell: (params) => {
+          // Handle both string and object customer values
+          const customerName = typeof params.value === 'string' 
+            ? params.value 
+            : (params.value?.customerName || params.value?.name || '');
+          return (
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                height: '100%',
+                lineHeight: 1.5
+              }}
+            >
+              {customerName || 'N/A'}
+            </Typography>
+          );
+        },
       },
       {
         field: 'quotation',
         headerName: 'Quotation',
         width: 200,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => {
           if (params.value && params.value.title) {
             return (
-              <Typography variant="body2">
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  height: '100%',
+                  lineHeight: 1.5
+                }}
+              >
                 {params.value.title}
               </Typography>
             );
           }
           return (
-            <Typography variant="body2" color="textSecondary" sx={{ fontStyle: 'italic' }}>
+            <Typography 
+              variant="body2" 
+              color="textSecondary" 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                height: '100%',
+                lineHeight: 1.5,
+                fontStyle: 'italic' 
+              }}
+            >
               No quotation
             </Typography>
           );
@@ -2383,13 +2448,22 @@ export default function PurchaseOrderManagement() {
         field: 'description',
         headerName: 'Description',
         width: 200,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <Typography variant="body2" sx={{ 
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            maxWidth: '180px'
-          }}>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              maxWidth: '180px'
+            }}
+          >
             {params.value || 'No description'}
           </Typography>
         ),
@@ -2398,6 +2472,8 @@ export default function PurchaseOrderManagement() {
         field: 'status',
         headerName: 'Status',
         width: 120,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => {
           const getStatusColor = (status) => {
             switch (status) {
@@ -2408,12 +2484,21 @@ export default function PurchaseOrderManagement() {
           };
           
           return (
-            <Chip 
-              label={params.value} 
-              variant="outlined" 
-              size="small"
-              color={getStatusColor(params.value)}
-            />
+            <Box
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                height: '100%',
+                lineHeight: 1.5
+              }}
+            >
+              <Chip 
+                label={params.value} 
+                variant="outlined" 
+                size="small"
+                color={getStatusColor(params.value)}
+              />
+            </Box>
           );
         },
       },
@@ -2421,6 +2506,8 @@ export default function PurchaseOrderManagement() {
         field: 'created_at',
         headerName: 'Created At',
         width: 180,
+        align: 'left',
+        headerAlign: 'left',
         valueFormatter: (params) => {
           if (!params.value) return '';
           try {
@@ -2435,7 +2522,15 @@ export default function PurchaseOrderManagement() {
           try {
             const date = new Date(params.value);
             return (
-              <Typography variant="body2">
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  height: '100%',
+                  lineHeight: 1.5
+                }}
+              >
                 {date.toLocaleDateString()} 
                 <br />
                 {date.toLocaleTimeString()}
@@ -2450,10 +2545,19 @@ export default function PurchaseOrderManagement() {
         field: 'challan_actions',
         headerName: 'Challan',
         width: 150,
+        align: 'left',
+        headerAlign: 'left',
         sortable: false,
         filterable: false,
         renderCell: (params) => (
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              gap: 1,
+              alignItems: 'center', 
+              height: '100%'
+            }}
+          >
             <Tooltip title="Generate Challan">
               <IconButton
                 size="small"

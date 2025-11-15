@@ -602,18 +602,58 @@ export default function EmployeeManagement() {
         field: 'id', 
         headerName: 'ID',
         width: 70,
+        align: 'left',
+        headerAlign: 'left',
+        renderCell: (params) => (
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
+            {params.value}
+          </Typography>
+        ),
       },
       {
         field: 'name',
         headerName: 'Employee Name',
         width: 200,
+        align: 'left',
+        headerAlign: 'left',
+        renderCell: (params) => (
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
+            {params.value}
+          </Typography>
+        ),
       },
       {
         field: 'designation',
         headerName: 'Designation',
         width: 150,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <Typography variant="body2">
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
             {params.value || 'N/A'}
           </Typography>
         ),
@@ -622,8 +662,19 @@ export default function EmployeeManagement() {
         field: 'basic_salary',
         headerName: 'Basic Salary',
         width: 130,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5,
+              fontWeight: 'bold' 
+            }}
+          >
             PKR {params.value ? parseFloat(params.value).toFixed(2) : '0.00'}
           </Typography>
         ),
@@ -632,6 +683,8 @@ export default function EmployeeManagement() {
         field: 'status',
         headerName: 'Status',
         width: 120,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => {
           const getStatusColor = (status) => {
             switch (status) {
@@ -642,12 +695,21 @@ export default function EmployeeManagement() {
           };
           
           return (
-            <Chip 
-              label={params.value} 
-              variant="outlined" 
-              size="small"
-              color={getStatusColor(params.value)}
-            />
+            <Box
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                height: '100%',
+                lineHeight: 1.5
+              }}
+            >
+              <Chip 
+                label={params.value} 
+                variant="outlined" 
+                size="small"
+                color={getStatusColor(params.value)}
+              />
+            </Box>
           );
         },
       },
@@ -655,17 +717,53 @@ export default function EmployeeManagement() {
         field: 'joining_date',
         headerName: 'Joining Date',
         width: 130,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => {
-          if (!params.value) return <Typography variant="body2">N/A</Typography>;
+          if (!params.value) {
+            return (
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  height: '100%',
+                  lineHeight: 1.5
+                }}
+              >
+                N/A
+              </Typography>
+            );
+          }
           try {
             const date = new Date(params.value);
             return (
-              <Typography variant="body2">
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  height: '100%',
+                  lineHeight: 1.5
+                }}
+              >
                 {date.toLocaleDateString()}
               </Typography>
             );
           } catch (error) {
-            return <Typography variant="body2">{params.value}</Typography>;
+            return (
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  height: '100%',
+                  lineHeight: 1.5
+                }}
+              >
+                {params.value}
+              </Typography>
+            );
           }
         },
       },
@@ -673,6 +771,8 @@ export default function EmployeeManagement() {
         field: 'created_at',
         headerName: 'Created At',
         width: 180,
+        align: 'left',
+        headerAlign: 'left',
         valueFormatter: (params) => {
           if (!params.value) return '';
           try {
@@ -687,7 +787,15 @@ export default function EmployeeManagement() {
           try {
             const date = new Date(params.value);
             return (
-              <Typography variant="body2">
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  height: '100%',
+                  lineHeight: 1.5
+                }}
+              >
                 {date.toLocaleDateString()} 
                 <br />
                 {date.toLocaleTimeString()}

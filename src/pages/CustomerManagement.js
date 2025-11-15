@@ -704,18 +704,58 @@ export default function CustomerManagement() {
         field: 'id', 
         headerName: 'ID',
         width: 70,
+        align: 'left',
+        headerAlign: 'left',
+        renderCell: (params) => (
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
+            {params.value}
+          </Typography>
+        ),
       },
       {
         field: 'customerName',
         headerName: 'Customer Name',
         width: 180,
+        align: 'left',
+        headerAlign: 'left',
+        renderCell: (params) => (
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
+            {params.value}
+          </Typography>
+        ),
       },
       {
         field: 'companyName',
         headerName: 'Company',
         width: 180,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <Typography variant="body2">
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
             {params.value || 'N/A'}
           </Typography>
         ),
@@ -724,8 +764,18 @@ export default function CustomerManagement() {
         field: 'telephoneNumber',
         headerName: 'Phone',
         width: 150,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <Typography variant="body2">
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
             {params.value || 'N/A'}
           </Typography>
         ),
@@ -734,8 +784,18 @@ export default function CustomerManagement() {
         field: 'ntn',
         headerName: 'NTN',
         width: 120,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <Typography variant="body2">
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
             {params.value || 'N/A'}
           </Typography>
         ),
@@ -744,12 +804,21 @@ export default function CustomerManagement() {
         field: 'address',
         headerName: 'Address',
         width: 200,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <Typography variant="body2" sx={{ 
-            overflow: 'hidden', 
-            textOverflow: 'ellipsis', 
-            whiteSpace: 'nowrap' 
-          }}>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5,
+              overflow: 'hidden', 
+              textOverflow: 'ellipsis', 
+              whiteSpace: 'nowrap' 
+            }}
+          >
             {params.value || 'N/A'}
           </Typography>
         ),
@@ -758,6 +827,8 @@ export default function CustomerManagement() {
         field: 'createdAt',
         headerName: 'Created At',
         width: 180,
+        align: 'left',
+        headerAlign: 'left',
         valueFormatter: (params) => {
           if (!params.value) return '';
           try {
@@ -772,7 +843,15 @@ export default function CustomerManagement() {
           try {
             const date = new Date(params.value);
             return (
-              <Typography variant="body2">
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  height: '100%',
+                  lineHeight: 1.5
+                }}
+              >
                 {date.toLocaleDateString()} 
                 <br />
                 {date.toLocaleTimeString()}

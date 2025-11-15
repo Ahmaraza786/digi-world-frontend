@@ -2771,22 +2771,57 @@ const PurchaseOrderSelectionComponent = React.memo(({
         field: 'id', 
         headerName: 'ID',
         width: 70,
+        align: 'left',
+        headerAlign: 'left',
+        renderCell: (params) => (
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
+            {params.value}
+          </Typography>
+        ),
       },
       {
         field: 'customer',
         headerName: 'Customer',
         width: 200,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => {
           if (params.value && typeof params.value === 'object') {
             return (
-              <Typography variant="body2">
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  height: '100%',
+                  lineHeight: 1.5
+                }}
+              >
                 {params.value.customerName}
                 {params.value.companyName && ` (${params.value.companyName})`}
               </Typography>
             );
           }
           return (
-            <Typography variant="body2" color="textSecondary" sx={{ fontStyle: 'italic' }}>
+            <Typography 
+              variant="body2" 
+              color="textSecondary" 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                height: '100%',
+                lineHeight: 1.5,
+                fontStyle: 'italic' 
+              }}
+            >
               {params.value || 'No customer'}
             </Typography>
           );
@@ -2796,16 +2831,36 @@ const PurchaseOrderSelectionComponent = React.memo(({
         field: 'purchaseOrder',
         headerName: 'Purchase Order',
         width: 180,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => {
           if (params.value && params.value.purchase_order_no) {
             return (
-              <Typography variant="body2">
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  height: '100%',
+                  lineHeight: 1.5
+                }}
+              >
                 {params.value.purchase_order_no}
               </Typography>
             );
           }
           return (
-            <Typography variant="body2" color="textSecondary" sx={{ fontStyle: 'italic' }}>
+            <Typography 
+              variant="body2" 
+              color="textSecondary" 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                height: '100%',
+                lineHeight: 1.5,
+                fontStyle: 'italic' 
+              }}
+            >
               No PO
             </Typography>
           );
@@ -2815,8 +2870,19 @@ const PurchaseOrderSelectionComponent = React.memo(({
         field: 'total_amount',
         headerName: 'Total Amount',
         width: 120,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5,
+              fontWeight: 'bold' 
+            }}
+          >
             PKR {params.value ? parseFloat(params.value).toFixed(2) : '0.00'}
           </Typography>
         ),
@@ -2825,6 +2891,8 @@ const PurchaseOrderSelectionComponent = React.memo(({
         field: 'invoice_type',
         headerName: 'Type',
         width: 100,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => {
           const getTypeColor = (type) => {
             switch (type) {
@@ -2835,12 +2903,21 @@ const PurchaseOrderSelectionComponent = React.memo(({
           };
           
           return (
-            <Chip 
-              label={params.value} 
-              variant="outlined" 
-              size="small"
-              color={getTypeColor(params.value)}
-            />
+            <Box
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                height: '100%',
+                lineHeight: 1.5
+              }}
+            >
+              <Chip 
+                label={params.value} 
+                variant="outlined" 
+                size="small"
+                color={getTypeColor(params.value)}
+              />
+            </Box>
           );
         },
       },
@@ -2848,6 +2925,8 @@ const PurchaseOrderSelectionComponent = React.memo(({
         field: 'status',
         headerName: 'Status',
         width: 120,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => {
           const getStatusColor = (status) => {
             switch (status) {
@@ -2858,12 +2937,21 @@ const PurchaseOrderSelectionComponent = React.memo(({
           };
           
           return (
-            <Chip 
-              label={params.value} 
-              variant="outlined" 
-              size="small"
-              color={getStatusColor(params.value)}
-            />
+            <Box
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                height: '100%',
+                lineHeight: 1.5
+              }}
+            >
+              <Chip 
+                label={params.value} 
+                variant="outlined" 
+                size="small"
+                color={getStatusColor(params.value)}
+              />
+            </Box>
           );
         },
       },
@@ -2871,6 +2959,8 @@ const PurchaseOrderSelectionComponent = React.memo(({
         field: 'description',
         headerName: 'Description',
         width: 200,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => {
           const quotationTitle = params.row?.purchaseOrder?.quotation?.title || 
                                  params.row?.quotation?.title || 
@@ -2878,36 +2968,55 @@ const PurchaseOrderSelectionComponent = React.memo(({
           const description = params.value || '';
           
           return (
-            <Box sx={{ maxWidth: '180px' }}>
-              {quotationTitle && (
-                <Typography variant="body2" sx={{ 
-                  fontWeight: 'bold',
-                  mb: 0.5
-                }}>
-                  {quotationTitle}
-                </Typography>
-              )}
-              {description && (
-                <Typography variant="body2" sx={{ 
-                  fontSize: '0.75rem',
-                  color: 'text.secondary',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical'
-                }}>
-                  {description}
-                </Typography>
-              )}
-              {!quotationTitle && !description && (
-                <Typography variant="body2" sx={{ 
-                  fontStyle: 'italic',
-                  color: 'text.secondary'
-                }}>
-                  No description
-                </Typography>
-              )}
+            <Box 
+              sx={{ 
+                maxWidth: '180px',
+                display: 'flex', 
+                alignItems: 'center', 
+                height: '100%',
+                lineHeight: 1.5
+              }}
+            >
+              <Box>
+                {quotationTitle && (
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      fontWeight: 'bold',
+                      mb: 0.5
+                    }}
+                  >
+                    {quotationTitle}
+                  </Typography>
+                )}
+                {description && (
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      fontSize: '0.75rem',
+                      color: 'text.secondary',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical'
+                    }}
+                  >
+                    {description}
+                  </Typography>
+                )}
+                {!quotationTitle && !description && (
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      fontStyle: 'italic',
+                      color: 'text.secondary'
+                    }}
+                  >
+                    No description
+                  </Typography>
+                )}
+              </Box>
             </Box>
           );
         },
@@ -2916,19 +3025,32 @@ const PurchaseOrderSelectionComponent = React.memo(({
         field: 'with_hold_tax',
         headerName: 'Withhold Tax',
         width: 120,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <Chip 
-            label={params.value ? 'Yes' : 'No'} 
-            variant="outlined" 
-            size="small"
-            color={params.value ? 'warning' : 'default'}
-          />
+          <Box
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
+            <Chip 
+              label={params.value ? 'Yes' : 'No'} 
+              variant="outlined" 
+              size="small"
+              color={params.value ? 'warning' : 'default'}
+            />
+          </Box>
         ),
       },
       {
         field: 'created_at',
         headerName: 'Created At',
         width: 180,
+        align: 'left',
+        headerAlign: 'left',
         valueFormatter: (params) => {
           if (!params.value) return '';
           try {
@@ -2943,7 +3065,15 @@ const PurchaseOrderSelectionComponent = React.memo(({
           try {
             const date = new Date(params.value);
             return (
-              <Typography variant="body2">
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  height: '100%',
+                  lineHeight: 1.5
+                }}
+              >
                 {date.toLocaleDateString()} 
                 <br />
                 {date.toLocaleTimeString()}

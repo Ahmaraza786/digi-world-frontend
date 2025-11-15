@@ -1326,17 +1326,41 @@ export default function QuotationManagement() {
         field: 'id', 
         headerName: 'ID',
         width: 70,
+        align: 'left',
+        headerAlign: 'left',
+        renderCell: (params) => (
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
+            {params.value}
+          </Typography>
+        ),
       },
       {
         field: 'title',
         headerName: 'Title',
         width: 200,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <Typography variant="body2" sx={{ 
-            fontWeight: params.value ? 'bold' : 'normal',
-            fontStyle: params.value ? 'normal' : 'italic',
-            color: params.value ? 'text.primary' : 'text.secondary'
-          }}>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5,
+              fontWeight: params.value ? 'bold' : 'normal',
+              fontStyle: params.value ? 'normal' : 'italic',
+              color: params.value ? 'text.primary' : 'text.secondary'
+            }}
+          >
             {params.value || 'No title'}
           </Typography>
         ),
@@ -1345,21 +1369,45 @@ export default function QuotationManagement() {
         field: 'customerName',
         headerName: 'Customer',
         width: 180,
+        align: 'left',
+        headerAlign: 'left',
+        renderCell: (params) => (
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
+            {params.value}
+          </Typography>
+        ),
       },
       {
         field: 'customerCompanyName',
         headerName: 'Company Name',
         width: 200,
+        align: 'left',
+        headerAlign: 'left',
         valueGetter: (value, row) => {
           return row?.customer?.companyName || 'N/A';
         },
         renderCell: (params) => {
           const companyName = params.row?.customer?.companyName;
           return (
-            <Typography variant="body2" sx={{ 
-              fontStyle: companyName ? 'normal' : 'italic',
-              color: companyName ? 'text.primary' : 'text.secondary'
-            }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                height: '100%',
+                lineHeight: 1.5,
+                fontStyle: companyName ? 'normal' : 'italic',
+                color: companyName ? 'text.primary' : 'text.secondary'
+              }}
+            >
               {companyName || 'N/A'}
             </Typography>
           );
@@ -1369,8 +1417,18 @@ export default function QuotationManagement() {
         field: 'materials',
         headerName: 'Materials',
         width: 100,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <Typography variant="body2">
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
             {params.value?.length || 0} item(s)
           </Typography>
         ),
@@ -1379,12 +1437,24 @@ export default function QuotationManagement() {
         field: 'totalPrice',
         headerName: 'Total Price',
         width: 120,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => {
           const formattedPrice = typeof params.value === 'number' 
             ? params.value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
             : (params.value ? Number(params.value).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : '0');
           return (
-            <Typography variant="body2" fontWeight="bold" color="primary">
+            <Typography 
+              variant="body2" 
+              fontWeight="bold" 
+              color="primary"
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                height: '100%',
+                lineHeight: 1.5
+              }}
+            >
               PKR {formattedPrice}
             </Typography>
           );
@@ -1394,6 +1464,8 @@ export default function QuotationManagement() {
         field: 'status',
         headerName: 'Status',
         width: 120,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => {
           const getStatusColor = (status) => {
             switch (status) {
@@ -1404,12 +1476,21 @@ export default function QuotationManagement() {
           };
           
           return (
-            <Chip 
-              label={params.value} 
-              variant="outlined" 
-              size="small"
-              color={getStatusColor(params.value)}
-            />
+            <Box
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                height: '100%',
+                lineHeight: 1.5
+              }}
+            >
+              <Chip 
+                label={params.value} 
+                variant="outlined" 
+                size="small"
+                color={getStatusColor(params.value)}
+              />
+            </Box>
           );
         },
       },
@@ -1417,6 +1498,8 @@ export default function QuotationManagement() {
         field: 'createdAt',
         headerName: 'Created At',
         width: 180,
+        align: 'left',
+        headerAlign: 'left',
         valueFormatter: (params) => {
           if (!params.value) return '';
           try {
@@ -1431,7 +1514,15 @@ export default function QuotationManagement() {
           try {
             const date = new Date(params.value);
             return (
-              <Typography variant="body2">
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  height: '100%',
+                  lineHeight: 1.5
+                }}
+              >
                 {date.toLocaleDateString()} 
                 <br />
                 {date.toLocaleTimeString()}

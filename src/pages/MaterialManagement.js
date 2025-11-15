@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
   Alert,
+  Box,
   Chip,
   Typography,
   Dialog,
@@ -417,18 +418,58 @@ export default function MaterialManagement() {
         field: 'id', 
         headerName: 'ID',
         width: 70,
+        align: 'left',
+        headerAlign: 'left',
+        renderCell: (params) => (
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
+            {params.value}
+          </Typography>
+        ),
       },
       {
         field: 'name',
         headerName: 'Name',
         width: 200,
+        align: 'left',
+        headerAlign: 'left',
+        renderCell: (params) => (
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
+            {params.value}
+          </Typography>
+        ),
       },
       {
         field: 'description',
         headerName: 'Description',
         width: 250,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <Typography variant="body2">
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
             {params.value || 'No description'}
           </Typography>
         ),
@@ -437,21 +478,42 @@ export default function MaterialManagement() {
         field: 'materialType',
         headerName: 'Type',
         width: 120,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <Chip 
-            label={params.value} 
-            variant="outlined" 
-            size="small"
-            color={params.value === 'material' ? 'primary' : 'secondary'}
-          />
+          <Box
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
+            <Chip 
+              label={params.value} 
+              variant="outlined" 
+              size="small"
+              color={params.value === 'material' ? 'primary' : 'secondary'}
+            />
+          </Box>
         ),
       },
       {
         field: 'unitPrice',
         headerName: 'Unit Price',
         width: 120,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <Typography variant="body2">
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
             PKR {params.value?.toFixed(2) || '0.00'}
           </Typography>
         ),
@@ -460,6 +522,8 @@ export default function MaterialManagement() {
         field: 'createdAt',
         headerName: 'Created At',
         width: 180,
+        align: 'left',
+        headerAlign: 'left',
         valueFormatter: (params) => {
           if (!params.value) return '';
           try {
@@ -474,7 +538,15 @@ export default function MaterialManagement() {
           try {
             const date = new Date(params.value);
             return (
-              <Typography variant="body2">
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  height: '100%',
+                  lineHeight: 1.5
+                }}
+              >
                 {date.toLocaleDateString()} 
                 <br />
                 {date.toLocaleTimeString()}
