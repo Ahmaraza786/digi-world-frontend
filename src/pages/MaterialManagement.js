@@ -514,7 +514,7 @@ export default function MaterialManagement() {
               lineHeight: 1.5
             }}
           >
-            PKR {params.value?.toFixed(2) || '0.00'}
+            PKR {params.value ? parseFloat(params.value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
           </Typography>
         ),
       },

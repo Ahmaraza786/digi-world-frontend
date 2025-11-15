@@ -2883,7 +2883,7 @@ const PurchaseOrderSelectionComponent = React.memo(({
               fontWeight: 'bold' 
             }}
           >
-            PKR {params.value ? parseFloat(params.value).toFixed(2) : '0.00'}
+            PKR {params.value ? parseFloat(params.value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
           </Typography>
         ),
       },

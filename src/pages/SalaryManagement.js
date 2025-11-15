@@ -901,13 +901,38 @@ export default function SalaryManagement() {
         field: 'id', 
         headerName: 'ID',
         width: 70,
+        align: 'left',
+        headerAlign: 'left',
+        renderCell: (params) => (
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
+            {params.value}
+          </Typography>
+        ),
       },
       {
         field: 'employee',
         headerName: 'Employee',
         width: 200,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <Typography variant="body2">
+          <Typography 
+            variant="body2"
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
             {params.value?.name || 'N/A'}
           </Typography>
         ),
@@ -916,60 +941,104 @@ export default function SalaryManagement() {
         field: 'basic_salary',
         headerName: 'Basic Salary',
         width: 130,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <TextField
-            type="number"
-            value={params.value}
-            onChange={(e) => handleUpdateSalary(params.row.id, 'basic_salary', e.target.value)}
-            size="small"
-            InputProps={{
-              startAdornment: <InputAdornment position="start">PKR</InputAdornment>
+          <Box
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
             }}
-            sx={{ width: 120 }}
-          />
+          >
+            <TextField
+              type="number"
+              value={params.value}
+              onChange={(e) => handleUpdateSalary(params.row.id, 'basic_salary', e.target.value)}
+              size="small"
+              InputProps={{
+                startAdornment: <InputAdornment position="start">PKR</InputAdornment>
+              }}
+              sx={{ width: 120 }}
+            />
+          </Box>
         ),
       },
       {
         field: 'bonus',
         headerName: 'Bonus',
         width: 120,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <TextField
-            type="number"
-            value={params.value}
-            onChange={(e) => handleUpdateSalary(params.row.id, 'bonus', e.target.value)}
-            size="small"
-            InputProps={{
-              startAdornment: <InputAdornment position="start">PKR</InputAdornment>
+          <Box
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
             }}
-            sx={{ width: 100 }}
-          />
+          >
+            <TextField
+              type="number"
+              value={params.value}
+              onChange={(e) => handleUpdateSalary(params.row.id, 'bonus', e.target.value)}
+              size="small"
+              InputProps={{
+                startAdornment: <InputAdornment position="start">PKR</InputAdornment>
+              }}
+              sx={{ width: 100 }}
+            />
+          </Box>
         ),
       },
       {
         field: 'deductions',
         headerName: 'Deductions',
         width: 130,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <TextField
-            type="number"
-            value={params.value}
-            onChange={(e) => handleUpdateSalary(params.row.id, 'deductions', e.target.value)}
-            size="small"
-            InputProps={{
-              startAdornment: <InputAdornment position="start">PKR</InputAdornment>
+          <Box
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
             }}
-            sx={{ width: 100 }}
-          />
+          >
+            <TextField
+              type="number"
+              value={params.value}
+              onChange={(e) => handleUpdateSalary(params.row.id, 'deductions', e.target.value)}
+              size="small"
+              InputProps={{
+                startAdornment: <InputAdornment position="start">PKR</InputAdornment>
+              }}
+              sx={{ width: 100 }}
+            />
+          </Box>
         ),
       },
       {
         field: 'net_salary',
         headerName: 'Net Salary',
         width: 130,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-            PKR {params.value ? parseFloat(params.value).toFixed(2) : '0.00'}
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5,
+              fontWeight: 'bold' 
+            }}
+          >
+            PKR {params.value ? parseFloat(params.value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
           </Typography>
         ),
       },
@@ -977,23 +1046,44 @@ export default function SalaryManagement() {
         field: 'is_finalized',
         headerName: 'Status',
         width: 120,
+        align: 'left',
+        headerAlign: 'left',
         renderCell: (params) => (
-          <Chip 
-            label={params.value ? 'Finalized' : 'Pending'} 
-            variant="outlined" 
-            size="small"
-            color={params.value ? 'success' : 'warning'}
-          />
+          <Box
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
+            <Chip 
+              label={params.value ? 'Finalized' : 'Pending'} 
+              variant="outlined" 
+              size="small"
+              color={params.value ? 'success' : 'warning'}
+            />
+          </Box>
         ),
       },
       {
         field: 'actions',
         headerName: 'Actions',
         width: 100,
+        align: 'center',
+        headerAlign: 'center',
         sortable: false,
         filterable: false,
         renderCell: (params) => (
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              height: '100%',
+              gap: 1 
+            }}
+          >
             <Tooltip title="Edit Salary">
               <IconButton
                 size="small"
@@ -1679,7 +1769,7 @@ export default function SalaryManagement() {
                         <TableCell>{expense.description}</TableCell>
                         <TableCell align="right">
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                            PKR {parseFloat(expense.amount).toFixed(2)}
+                            PKR {parseFloat(expense.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </Typography>
                         </TableCell>
                         <TableCell align="center">
@@ -1721,7 +1811,7 @@ export default function SalaryManagement() {
             {expenses.length > 0 && (
               <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                  Total Expenses: PKR {expensesSummary.totalAmount.toFixed(2)}
+                  Total Expenses: PKR {expensesSummary.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Typography>
               </Box>
             )}
