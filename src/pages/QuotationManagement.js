@@ -30,7 +30,7 @@ import PageContainer from '../components/PageContainer';
 import DynamicModal from '../components/DynamicModel';
 import { BASE_URL } from "../constants/Constants";
 import { useApi } from '../hooks/useApi';
-import { Add, Delete, Edit, FileDownload, Search, Clear, Visibility } from '@mui/icons-material';
+import { Add, Delete, Edit, FileDownload, Search, Clear, Visibility, Email } from '@mui/icons-material';
 
 const INITIAL_PAGE_SIZE = 10;
 
@@ -71,6 +71,15 @@ export default function QuotationManagement() {
   const [pdfPreviewOpen, setPdfPreviewOpen] = React.useState(false);
   const [pdfPreviewData, setPdfPreviewData] = React.useState(null);
   const [loadingPdfPreview, setLoadingPdfPreview] = React.useState(false);
+
+  // Email dialog state
+  const [emailDialogOpen, setEmailDialogOpen] = React.useState(false);
+  const [emailFormData, setEmailFormData] = React.useState({
+    recipientEmail: '',
+    message: ''
+  });
+  const [quotationToEmail, setQuotationToEmail] = React.useState(null);
+  const [sendingEmail, setSendingEmail] = React.useState(false);
 
   // Data for dropdowns
   const [materials, setMaterials] = React.useState([]);
@@ -1104,6 +1113,122 @@ export default function QuotationManagement() {
     }
   }, [get]);
 
+  // Handle opening email dialog
+  const handleOpenEmailDialog = React.useCallback((quotationData) => {
+    if (!canRead) return;
+    
+    // Check if quotation is pending
+    if (quotationData.status !== 'pending') {
+      toast.warning('Only pending quotations can be sent via email', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      return;
+    }
+
+    setQuotationToEmail(quotationData);
+    // Use customer email if available, otherwise empty (user can fill in)
+    const customerEmail = quotationData.customer?.email || '';
+    const companyName = quotationData.customer?.companyName || '';
+    
+    setEmailFormData({
+      recipientEmail: customerEmail,
+      message: `Dear ${companyName ? companyName + ' Team' : quotationData.customer?.customerName || 'Customer'},\n\nPlease find attached our quotation for your review.\n\nIf you need any further information or would like to discuss the details, please feel free to contact us.\n\nBest regards,\nDigital World Sales Team`
+    });
+    setEmailDialogOpen(true);
+  }, [canRead]);
+
+  // Handle sending email
+  const handleSendEmail = React.useCallback(async () => {
+    if (!quotationToEmail) return;
+
+    // Validate email
+    if (!emailFormData.recipientEmail || emailFormData.recipientEmail.trim() === '') {
+      toast.error('Recipient email is required', {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailFormData.recipientEmail)) {
+      toast.error('Invalid email format', {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    // Validate message
+    if (!emailFormData.message || emailFormData.message.trim() === '') {
+      toast.error('Email message is required', {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    setSendingEmail(true);
+
+    try {
+      const response = await post(`/api/quotations/${quotationToEmail.id}/send-email`, {
+        recipientEmail: emailFormData.recipientEmail.trim(),
+        message: emailFormData.message.trim()
+      });
+
+      if (response.success) {
+        toast.success('Quotation sent via email successfully!', {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+
+        // Close dialog and reset form
+        setEmailDialogOpen(false);
+        setEmailFormData({
+          recipientEmail: '',
+          message: ''
+        });
+        setQuotationToEmail(null);
+      } else {
+        throw new Error(response.message || 'Failed to send email');
+      }
+    } catch (error) {
+      console.error('Send email error:', error);
+      toast.error(`Failed to send email: ${error.message || 'Unknown error'}`, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    } finally {
+      setSendingEmail(false);
+    }
+  }, [quotationToEmail, emailFormData, post]);
+
+  // Handle closing email dialog
+  const handleCloseEmailDialog = React.useCallback(() => {
+    if (sendingEmail) return; // Prevent closing while sending
+    
+    setEmailDialogOpen(false);
+    setEmailFormData({
+      recipientEmail: '',
+      message: ''
+    });
+    setQuotationToEmail(null);
+  }, [sendingEmail]);
+
   // Confirm delete function
   const confirmDelete = async () => {
     if (!quotationToDelete) return;
@@ -1794,6 +1919,7 @@ export default function QuotationManagement() {
         onExport={handleExport}
         exportingQuotationId={exportingQuotationId}
         onViewPdf={canRead ? handleViewPdf : null}
+        onSendEmail={canRead ? handleOpenEmailDialog : null}
         onCreate={canCreate ? handleCreate : null}
         onRefresh={canRead ? handleRefresh : null}
         
@@ -1985,6 +2111,203 @@ export default function QuotationManagement() {
             </Box>
           )}
         </DialogContent>
+      </Dialog>
+
+      {/* Email Dialog */}
+      <Dialog
+        open={emailDialogOpen}
+        onClose={handleCloseEmailDialog}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            backgroundColor: '#ffffff',
+            borderRadius: '12px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+          }
+        }}
+      >
+        <DialogTitle 
+          sx={{ 
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: '#ffffff',
+            fontWeight: 'bold',
+            borderRadius: '12px 12px 0 0',
+            pb: 3,
+            pt: 3
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ 
+              bgcolor: 'rgba(255, 255, 255, 0.2)', 
+              p: 1.5, 
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Email sx={{ fontSize: 28 }} />
+            </Box>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                Send Quotation via Email
+              </Typography>
+              {quotationToEmail && (
+                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                  Quotation #{quotationToEmail.id} - {quotationToEmail.title}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        </DialogTitle>
+        
+        <DialogContent sx={{ pt: 3, pb: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {/* Recipient Email */}
+            <Box>
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: '#2c3e50' }}>
+                Recipient Email Address *
+              </Typography>
+              <TextField
+                type="email"
+                fullWidth
+                required
+                value={emailFormData.recipientEmail}
+                onChange={(e) => setEmailFormData(prev => ({ ...prev, recipientEmail: e.target.value }))}
+                placeholder="customer@example.com"
+                disabled={sendingEmail}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '8px',
+                    '&:hover fieldset': {
+                      borderColor: '#667eea',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#667eea',
+                    },
+                  },
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Email color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Box>
+
+            {/* Message */}
+            <Box>
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: '#2c3e50' }}>
+                Your Message *
+              </Typography>
+              <TextField
+                multiline
+                rows={8}
+                fullWidth
+                required
+                value={emailFormData.message}
+                onChange={(e) => setEmailFormData(prev => ({ ...prev, message: e.target.value }))}
+                placeholder="Enter your message here..."
+                disabled={sendingEmail}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '8px',
+                    '&:hover fieldset': {
+                      borderColor: '#667eea',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#667eea',
+                    },
+                  },
+                }}
+              />
+            </Box>
+
+            {/* Info Box */}
+            <Box sx={{ 
+              p: 2.5, 
+              background: 'linear-gradient(135deg, #667eea15 0%, #764ba215 100%)',
+              borderRadius: '12px', 
+              border: '1px solid #667eea40'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                <Box sx={{ 
+                  bgcolor: '#667eea', 
+                  color: 'white',
+                  p: 0.8, 
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  mt: 0.3
+                }}>
+                  <FileDownload sx={{ fontSize: 20 }} />
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#2c3e50', mb: 1 }}>
+                    📎 What will be sent:
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#5a6c7d', mb: 0.5 }}>
+                    ✓ Your custom message above
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#5a6c7d', mb: 0.5 }}>
+                    ✓ Complete quotation PDF with materials and pricing
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#5a6c7d' }}>
+                    ✓ Professional formatting and company details
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        </DialogContent>
+        
+        <DialogActions sx={{ p: 3, gap: 1.5, borderTop: '1px solid #e0e0e0', bgcolor: '#f8f9fa' }}>
+          <Button 
+            onClick={handleCloseEmailDialog}
+            variant="outlined"
+            sx={{ 
+              borderRadius: '8px',
+              px: 3,
+              py: 1,
+              color: '#666',
+              borderColor: '#ddd',
+              '&:hover': {
+                borderColor: '#999',
+                backgroundColor: 'rgba(0, 0, 0, 0.04)',
+              }
+            }}
+            disabled={sendingEmail}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSendEmail}
+            variant="contained"
+            startIcon={sendingEmail ? <CircularProgress size={20} color="inherit" /> : <Email />}
+            sx={{
+              borderRadius: '8px',
+              px: 4,
+              py: 1,
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: '#ffffff',
+              fontWeight: 600,
+              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%)',
+                boxShadow: '0 6px 16px rgba(102, 126, 234, 0.5)',
+              },
+              '&:disabled': {
+                background: 'linear-gradient(135deg, #667eea80 0%, #764ba280 100%)',
+                color: '#ffffff',
+              }
+            }}
+            disabled={sendingEmail || !emailFormData.recipientEmail || !emailFormData.message}
+          >
+            {sendingEmail ? 'Sending Email...' : 'Send Email'}
+          </Button>
+        </DialogActions>
       </Dialog>
 
       {/* React Toastify Container */}

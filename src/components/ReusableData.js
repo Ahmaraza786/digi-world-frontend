@@ -22,6 +22,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import EmailIcon from '@mui/icons-material/Email';
 import { GridToolbar } from '@mui/x-data-grid/internals';
 const INITIAL_PAGE_SIZE = 10;
 
@@ -52,6 +53,7 @@ const ReusableDataTable = ({
   onExport = null,
   onDownload = null,
   onViewPdf = null,
+  onSendEmail = null,
   onCreate = null,
   onRefresh = null,
   exportingQuotationId = null, // ID of quotation being exported
@@ -85,7 +87,7 @@ const ReusableDataTable = ({
     }));
     
     // Add actions column if any action handlers are provided
-    if (onView || onEdit || onDelete || onExport || onDownload || onViewPdf) {
+    if (onView || onEdit || onDelete || onExport || onDownload || onViewPdf || onSendEmail) {
       const actionsColumn = {
         field: 'actions',
         type: 'actions',
@@ -169,6 +171,18 @@ const ReusableDataTable = ({
             );
           }
           
+          // Only show Send Email button for pending quotations
+          if (onSendEmail && row.status === 'pending') {
+            actions.push(
+              <GridActionsCellItem
+                key="send-email-item"
+                icon={<EmailIcon />}
+                label="Send Email"
+                onClick={() => onSendEmail(row)}
+              />
+            );
+          }
+          
           return actions;
         },
       };
@@ -177,7 +191,7 @@ const ReusableDataTable = ({
     }
     
     return baseColumns;
-  }, [columns, onView, onEdit, onDelete, onExport, onDownload, onViewPdf, exportingQuotationId, downloadingInvoiceId]);
+  }, [columns, onView, onEdit, onDelete, onExport, onDownload, onViewPdf, onSendEmail, exportingQuotationId, downloadingInvoiceId]);
 
   const initialState = React.useMemo(
     () => ({

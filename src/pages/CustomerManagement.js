@@ -311,6 +311,15 @@ export default function CustomerManagement() {
     return '';
   };
 
+  const validateEmail = (email) => {
+    if (!email) return ''; // Email is optional
+    if (email.length > 255) return 'Email must be less than 255 characters';
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return 'Invalid email format';
+    return '';
+  };
+
   const validateCompanyName = (name) => {
     if (name && name.length > 255) return 'Company name must be less than 255 characters';
     return '';
@@ -376,6 +385,14 @@ export default function CustomerManagement() {
       readOnly: isViewMode,
       validate: validateNtn,
       tooltip: 'National Tax Number'
+    },
+    {
+      name: 'email',
+      label: 'Email',
+      type: 'email',
+      readOnly: isViewMode,
+      validate: validateEmail,
+      tooltip: 'Customer email address'
     }
   ];
 
@@ -635,6 +652,7 @@ export default function CustomerManagement() {
         telephoneNumber: formData.telephoneNumber,
         fax: formData.fax,
         ntn: formData.ntn,
+        email: formData.email,
       };
 
       let response;
@@ -784,6 +802,26 @@ export default function CustomerManagement() {
         field: 'ntn',
         headerName: 'NTN',
         width: 120,
+        align: 'left',
+        headerAlign: 'left',
+        renderCell: (params) => (
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
+            {params.value || 'N/A'}
+          </Typography>
+        ),
+      },
+      {
+        field: 'email',
+        headerName: 'Email',
+        width: 200,
         align: 'left',
         headerAlign: 'left',
         renderCell: (params) => (
