@@ -416,7 +416,7 @@ export default function SignIn(props) {
               color: '#666666 !important',
             }
           }}>
-            Diamond Paints
+            Digital World
           </Divider>
         </Card>
         

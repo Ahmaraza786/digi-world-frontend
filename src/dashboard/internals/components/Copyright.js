@@ -17,7 +17,7 @@ export default function Copyright(props) {
     >
       {'Copyright © '}
       <Link color="inherit" href="https://mui.com/">
-        Diamond Paints
+      Digital World
       </Link>{' '}
       {new Date().getFullYear()}
       {'.'}
