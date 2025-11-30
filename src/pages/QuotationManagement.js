@@ -57,6 +57,7 @@ export default function QuotationManagement() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
   const [exportingQuotationId, setExportingQuotationId] = React.useState(null);
+  const [viewingPdfQuotationId, setViewingPdfQuotationId] = React.useState(null);
   
   // Modal state
   const [modalOpen, setModalOpen] = React.useState(false);
@@ -1001,6 +1002,12 @@ export default function QuotationManagement() {
       // Set loading state
       setExportingQuotationId(quotationData.id);
       
+      // Show loading toast
+      const loadingToastId = toast.loading('Preparing PDF for download...', {
+        position: "top-right",
+        autoClose: false,
+      });
+      
       // Create a download link
       const exportUrl = `${BASE_URL}/api/export/quotation/${quotationData.id}`;
       
@@ -1056,7 +1063,9 @@ export default function QuotationManagement() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-      toast.success('Quotation exported successfully!', {
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToastId);
+      toast.success('Quotation downloaded successfully!', {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -1084,6 +1093,14 @@ export default function QuotationManagement() {
   const handleViewPdf = React.useCallback(async (quotationData) => {
     try {
       setLoadingPdfPreview(true);
+      setViewingPdfQuotationId(quotationData.id);
+      
+      // Show loading toast
+      const loadingToastId = toast.loading('Loading PDF preview...', {
+        position: "top-right",
+        autoClose: false,
+      });
+      
       console.log('Loading PDF preview for quotation:', quotationData);
       
       const response = await get(`/api/export/quotation/${quotationData.id}/html`);
@@ -1094,6 +1111,9 @@ export default function QuotationManagement() {
           html: response.html
         });
         setPdfPreviewOpen(true);
+        
+        // Dismiss loading toast
+        toast.dismiss(loadingToastId);
       } else {
         throw new Error('Failed to load PDF preview');
       }
@@ -1110,6 +1130,7 @@ export default function QuotationManagement() {
       });
     } finally {
       setLoadingPdfPreview(false);
+      setViewingPdfQuotationId(null);
     }
   }, [get]);
 
@@ -1919,6 +1940,8 @@ export default function QuotationManagement() {
         onExport={handleExport}
         exportingQuotationId={exportingQuotationId}
         onViewPdf={canRead ? handleViewPdf : null}
+        loadingPdfPreview={loadingPdfPreview}
+        viewingPdfQuotationId={viewingPdfQuotationId}
         onSendEmail={canRead ? handleOpenEmailDialog : null}
         onCreate={canCreate ? handleCreate : null}
         onRefresh={canRead ? handleRefresh : null}

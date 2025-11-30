@@ -58,6 +58,9 @@ const ReusableDataTable = ({
   onRefresh = null,
   exportingQuotationId = null, // ID of quotation being exported
   downloadingInvoiceId = null, // ID of invoice being downloaded
+  loadingPdfPreview = false, // Loading state for PDF preview
+  viewingPdfQuotationId = null, // ID of quotation being previewed
+  viewingPdfInvoiceId = null, // ID of invoice being previewed
   
   // Row interaction
   onRowClick = null,
@@ -161,12 +164,16 @@ const ReusableDataTable = ({
           }
           
           if (onViewPdf) {
+            // Check if loading: either quotation or invoice
+            const isLoading = (loadingPdfPreview && viewingPdfQuotationId === row.id) || 
+                             (loadingPdfPreview && viewingPdfInvoiceId === row.id);
             actions.push(
               <GridActionsCellItem
                 key="view-pdf-item"
-                icon={<PictureAsPdfIcon />}
+                icon={isLoading ? <CircularProgress size={20} /> : <PictureAsPdfIcon />}
                 label="View PDF"
                 onClick={() => onViewPdf(row)}
+                disabled={isLoading}
               />
             );
           }
@@ -191,7 +198,7 @@ const ReusableDataTable = ({
     }
     
     return baseColumns;
-  }, [columns, onView, onEdit, onDelete, onExport, onDownload, onViewPdf, onSendEmail, exportingQuotationId, downloadingInvoiceId]);
+  }, [columns, onView, onEdit, onDelete, onExport, onDownload, onViewPdf, onSendEmail, exportingQuotationId, downloadingInvoiceId, loadingPdfPreview, viewingPdfQuotationId, viewingPdfInvoiceId]);
 
   const initialState = React.useMemo(
     () => ({

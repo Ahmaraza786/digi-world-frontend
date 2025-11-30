@@ -67,6 +67,7 @@ export default function InvoiceManagement() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
   const [downloadingInvoiceId, setDownloadingInvoiceId] = React.useState(null);
+  const [viewingPdfInvoiceId, setViewingPdfInvoiceId] = React.useState(null);
   
   // Modal state
   const [modalOpen, setModalOpen] = React.useState(false);
@@ -2486,6 +2487,12 @@ const PurchaseOrderSelectionComponent = React.memo(({
       // Set loading state
       setDownloadingInvoiceId(invoiceData.id);
       
+      // Show loading toast
+      const loadingToastId = toast.loading('Preparing invoice PDF for download...', {
+        position: "top-right",
+        autoClose: false,
+      });
+      
       // Fetch full invoice data to get quotation title
       const fullInvoiceData = await get(`/api/invoices/${invoiceData.id}`);
       
@@ -2528,6 +2535,8 @@ const PurchaseOrderSelectionComponent = React.memo(({
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToastId);
       toast.success('Invoice downloaded successfully!', {
         position: "top-right",
         autoClose: 3000,
@@ -2556,6 +2565,14 @@ const PurchaseOrderSelectionComponent = React.memo(({
   const handleViewPdf = React.useCallback(async (invoiceData) => {
     try {
       setLoadingPdfPreview(true);
+      setViewingPdfInvoiceId(invoiceData.id);
+      
+      // Show loading toast
+      const loadingToastId = toast.loading('Loading invoice PDF preview...', {
+        position: "top-right",
+        autoClose: false,
+      });
+      
       console.log('Loading PDF preview for invoice:', invoiceData);
       
       const response = await get(`/api/generate/invoice/${invoiceData.id}/html`);
@@ -2566,6 +2583,9 @@ const PurchaseOrderSelectionComponent = React.memo(({
           html: response.html
         });
         setPdfPreviewOpen(true);
+        
+        // Dismiss loading toast
+        toast.dismiss(loadingToastId);
       } else {
         throw new Error('Failed to load PDF preview');
       }
@@ -2582,6 +2602,7 @@ const PurchaseOrderSelectionComponent = React.memo(({
       });
     } finally {
       setLoadingPdfPreview(false);
+      setViewingPdfInvoiceId(null);
     }
   }, [get]);
 
@@ -3368,6 +3389,8 @@ const PurchaseOrderSelectionComponent = React.memo(({
         onDownload={canRead ? handleDownloadInvoice : null}
         downloadingInvoiceId={downloadingInvoiceId}
         onViewPdf={canRead ? handleViewPdf : null}
+        loadingPdfPreview={loadingPdfPreview}
+        viewingPdfInvoiceId={viewingPdfInvoiceId}
         
         // Row interaction
         onRowClick={canRead ? handleRowClick : null}
