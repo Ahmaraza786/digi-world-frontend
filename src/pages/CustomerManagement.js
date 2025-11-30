@@ -718,26 +718,26 @@ export default function CustomerManagement() {
   // Column definitions
   const columns = React.useMemo(
     () => [
-      { 
-        field: 'id', 
-        headerName: 'ID',
-        width: 70,
-        align: 'left',
-        headerAlign: 'left',
-        renderCell: (params) => (
-          <Typography 
-            variant="body2" 
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              height: '100%',
-              lineHeight: 1.5
-            }}
-          >
-            {params.value}
-          </Typography>
-        ),
-      },
+      // { 
+      //   field: 'id', 
+      //   headerName: 'ID',
+      //   width: 70,
+      //   align: 'left',
+      //   headerAlign: 'left',
+      //   renderCell: (params) => (
+      //     <Typography 
+      //       variant="body2" 
+      //       sx={{ 
+      //         display: 'flex', 
+      //         alignItems: 'center', 
+      //         height: '100%',
+      //         lineHeight: 1.5
+      //       }}
+      //     >
+      //       {params.value}
+      //     </Typography>
+      //   ),
+      // },
       {
         field: 'customerName',
         headerName: 'Customer Name',

@@ -2381,26 +2381,26 @@ export default function PurchaseOrderManagement() {
   // Column definitions for purchase orders
   const columns = React.useMemo(
     () => [
-      { 
-        field: 'id', 
-        headerName: 'ID',
-        width: 70,
-        align: 'left',
-        headerAlign: 'left',
-        renderCell: (params) => (
-          <Typography 
-            variant="body2" 
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              height: '100%',
-              lineHeight: 1.5
-            }}
-          >
-            {params.value}
-          </Typography>
-        ),
-      },
+      // { 
+      //   field: 'id', 
+      //   headerName: 'ID',
+      //   width: 70,
+      //   align: 'left',
+      //   headerAlign: 'left',
+      //   renderCell: (params) => (
+      //     <Typography 
+      //       variant="body2" 
+      //       sx={{ 
+      //         display: 'flex', 
+      //         alignItems: 'center', 
+      //         height: '100%',
+      //         lineHeight: 1.5
+      //       }}
+      //     >
+      //       {params.value}
+      //     </Typography>
+      //   ),
+      // },
       {
         field: 'purchase_order_no',
         headerName: 'PO Number',
