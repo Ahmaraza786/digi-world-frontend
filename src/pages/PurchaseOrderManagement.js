@@ -57,13 +57,44 @@ const ChallanGenerationForm = ({ availableMaterials, purchaseOrder, onClose, onS
     });
   };
 
-  const handleQuantityChange = (materialId, quantity) => {
+  const handleQuantityChange = (materialId, value, maxQuantity) => {
+    // Allow empty string or numbers only
+    if (value === '') {
+      setSelectedMaterials(prev => 
+        prev.map(m => 
+          m.material_id === materialId 
+            ? { ...m, quantity: value }
+            : m
+        )
+      );
+    } else if (/^\d+$/.test(value)) {
+      // Only accept numeric values
+      const numValue = parseInt(value);
+      // Only allow values between 1 and maxQuantity
+      if (numValue >= 1 && numValue <= maxQuantity) {
+        setSelectedMaterials(prev => 
+          prev.map(m => 
+            m.material_id === materialId 
+              ? { ...m, quantity: value }
+              : m
+          )
+        );
+      }
+    }
+    // If invalid input (characters, symbols, 0, or > max), do nothing - field won't update
+  };
+
+  const handleQuantityBlur = (materialId, maxQuantity) => {
+    // Validate and set proper value on blur
     setSelectedMaterials(prev => 
-      prev.map(m => 
-        m.material_id === materialId 
-          ? { ...m, quantity: Math.max(1, parseInt(quantity) || 1) }
-          : m
-      )
+      prev.map(m => {
+        if (m.material_id === materialId) {
+          const quantity = parseInt(m.quantity) || 1;
+          const validQuantity = Math.max(1, Math.min(quantity, maxQuantity));
+          return { ...m, quantity: validQuantity };
+        }
+        return m;
+      })
     );
   };
 
@@ -76,6 +107,12 @@ const ChallanGenerationForm = ({ availableMaterials, purchaseOrder, onClose, onS
       return;
     }
 
+    // Validate all quantities before submitting
+    const validatedMaterials = selectedMaterials.map(material => ({
+      ...material,
+      quantity: Math.max(1, parseInt(material.quantity) || 1)
+    }));
+
     if (!purchaseOrder || !purchaseOrder.id) {
       console.error('Purchase order data:', purchaseOrder);
       toast.error('Purchase order information is missing', {
@@ -87,7 +124,7 @@ const ChallanGenerationForm = ({ availableMaterials, purchaseOrder, onClose, onS
 
     console.log('Creating challan with data:', {
       purchase_order_id: purchaseOrder.id,
-      materials: selectedMaterials,
+      materials: validatedMaterials,
       purchaseOrder: purchaseOrder
     });
 
@@ -95,7 +132,7 @@ const ChallanGenerationForm = ({ availableMaterials, purchaseOrder, onClose, onS
     try {
       const response = await post('/api/challans', {
         purchase_order_id: purchaseOrder.id,
-        materials: selectedMaterials
+        materials: validatedMaterials
       });
 
       if (response.success) {
@@ -153,17 +190,18 @@ const ChallanGenerationForm = ({ availableMaterials, purchaseOrder, onClose, onS
                   </Typography>
                   {material.can_deliver && selectedMaterials.find(m => m.material_id === material.material_id) && (
                     <TextField
-                      type="number"
+                      type="text"
                       label="Quantity to Deliver"
-                      value={selectedMaterials.find(m => m.material_id === material.material_id)?.quantity || 1}
-                      onChange={(e) => handleQuantityChange(material.material_id, e.target.value)}
+                      value={selectedMaterials.find(m => m.material_id === material.material_id)?.quantity}
+                      onChange={(e) => handleQuantityChange(material.material_id, e.target.value, material.remaining_quantity)}
+                      onBlur={() => handleQuantityBlur(material.material_id, material.remaining_quantity)}
                       size="small"
-                      inputProps={{ 
-                        min: 1, 
-                        max: material.remaining_quantity 
-                      }}
                       onClick={(e) => e.stopPropagation()}
                       sx={{ mt: 1 }}
+                      helperText={`Max: ${material.remaining_quantity} | Min: 1`}
+                      error={
+                        selectedMaterials.find(m => m.material_id === material.material_id)?.quantity === ''
+                      }
                     />
                   )}
                 </Box>
@@ -1402,38 +1440,45 @@ export default function PurchaseOrderManagement() {
                     {material.unit}
                   </td>
                   <td style={{ padding: '8px 12px', textAlign: 'right', border: '1px solid #e0e0e0' }}>
-                    {material.unit_price}
+                    {Number(material.unit_price || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                   </td>
                   <td style={{ padding: '8px 12px', textAlign: 'right', border: '1px solid #e0e0e0', fontWeight: 'bold', color: '#1976d2' }}>
-                    {(material.quantity * material.unit_price).toFixed(2)}
+                    {((material.quantity || 0) * (material.unit_price || 0)).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                   </td>
                   <td style={{ padding: '4px', border: '1px solid #e0e0e0', textAlign: 'right' }}>
                     {!isViewMode ? (
-                      <TextField
-                        type="number"
-                        value={materialCosts[index] || ''}
-                        onChange={(e) => handleCostChange(index, e.target.value)}
-                        placeholder="0.00"
-                        size="small"
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            '& fieldset': { border: 'none' },
-                            '&:hover fieldset': { border: '1px solid #1976d2' },
-                            '&.Mui-focused fieldset': { border: '1px solid #1976d2' },
-                          },
-                          '& .MuiInputBase-input': {
-                            textAlign: 'right',
-                            padding: '4px 8px',
-                            fontSize: '0.875rem',
-                            fontWeight: 'bold',
-                            color: '#2e7d32'
-                          }
-                        }}
-                        InputProps={{}}
-                      />
+                      <Box>
+                        <TextField
+                          type="number"
+                          value={materialCosts[index] || ''}
+                          onChange={(e) => handleCostChange(index, e.target.value)}
+                          placeholder="0"
+                          size="small"
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              '& fieldset': { border: 'none' },
+                              '&:hover fieldset': { border: '1px solid #1976d2' },
+                              '&.Mui-focused fieldset': { border: '1px solid #1976d2' },
+                            },
+                            '& .MuiInputBase-input': {
+                              textAlign: 'right',
+                              padding: '4px 8px',
+                              fontSize: '0.875rem',
+                              fontWeight: 'bold',
+                              color: '#2e7d32'
+                            }
+                          }}
+                          InputProps={{}}
+                        />
+                        {materialCosts[index] > 0 && (
+                          <Typography variant="caption" sx={{ display: 'block', textAlign: 'right', color: '#2e7d32', mt: 0.5, px: 1 }}>
+                            = {Number(materialCosts[index] || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                          </Typography>
+                        )}
+                      </Box>
                     ) : (
                       <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#2e7d32', textAlign: 'right', padding: '8px' }}>
-                        {parseFloat(materialCosts[index] || 0).toFixed(2)}
+                        {parseFloat(materialCosts[index] || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                       </Typography>
                     )}
                   </td>
@@ -1446,10 +1491,10 @@ export default function PurchaseOrderManagement() {
                   <strong>Grand Total:</strong>
                 </td>
                 <td style={{ padding: '8px 12px', textAlign: 'right', border: '1px solid #e0e0e0', color: '#1976d2' }}>
-                  <strong>{quotation.totalPrice}</strong>
+                  <strong>{Number(quotation.totalPrice || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</strong>
                 </td>
                 <td style={{ padding: '8px 12px', textAlign: 'right', border: '1px solid #e0e0e0', color: '#2e7d32' }}>
-                  <strong>{totalActualCost.toFixed(2)}</strong>
+                  <strong>{totalActualCost.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</strong>
                 </td>
               </tr>
             </tfoot>
