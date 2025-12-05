@@ -78,9 +78,9 @@ export default function SalaryManagement() {
   const [availableEmployees, setAvailableEmployees] = React.useState([]);
   const [selectedEmployee, setSelectedEmployee] = React.useState(null);
   const [newSalaryData, setNewSalaryData] = React.useState({
-    basic_salary: 0,
-    bonus: 0,
-    deductions: 0
+    basic_salary: '',
+    bonus: '',
+    deductions: ''
   });
 
   // Expenses modal state
@@ -89,7 +89,7 @@ export default function SalaryManagement() {
   const [expensesSummary, setExpensesSummary] = React.useState({ totalAmount: 0, count: 0 });
   const [newExpense, setNewExpense] = React.useState({
     description: '',
-    amount: 0
+    amount: ''
   });
   const [editingExpense, setEditingExpense] = React.useState(null);
 
@@ -408,12 +408,12 @@ export default function SalaryManagement() {
 
   // Handle edit salary
   const handleEditSalary = (salary) => {
-    // Ensure we have proper default values to avoid NaN
+    // Store as strings to allow clearing the field
     setSelectedSalary({
       ...salary,
-      basic_salary: salary.basic_salary || 0,
-      bonus: salary.bonus || 0,
-      deductions: salary.deductions || 0
+      basic_salary: salary.basic_salary?.toString() || '',
+      bonus: salary.bonus?.toString() || '',
+      deductions: salary.deductions?.toString() || ''
     });
     setEditModalOpen(true);
   };
@@ -430,9 +430,9 @@ export default function SalaryManagement() {
     
     try {
       const updateData = {
-        basic_salary: parseFloat(formData.basic_salary),
-        bonus: parseFloat(formData.bonus),
-        deductions: parseFloat(formData.deductions),
+        basic_salary: parseFloat(formData.basic_salary) || 0,
+        bonus: parseFloat(formData.bonus) || 0,
+        deductions: parseFloat(formData.deductions) || 0,
         // If editing a finalized salary, mark it as pending (needs re-finalization)
         is_finalized: selectedSalary.is_finalized ? false : false
       };
@@ -510,9 +510,9 @@ export default function SalaryManagement() {
     setAddEmployeeModalOpen(false);
     setSelectedEmployee(null);
     setNewSalaryData({
-      basic_salary: 0,
-      bonus: 0,
-      deductions: 0
+      basic_salary: '',
+      bonus: '',
+      deductions: ''
     });
   };
 
@@ -525,9 +525,9 @@ export default function SalaryManagement() {
         employee_id: selectedEmployee.id,
         month: selectedMonth,
         year: selectedYear,
-        basic_salary: parseFloat(newSalaryData.basic_salary),
-        bonus: parseFloat(newSalaryData.bonus),
-        deductions: parseFloat(newSalaryData.deductions)
+        basic_salary: parseFloat(newSalaryData.basic_salary) || 0,
+        bonus: parseFloat(newSalaryData.bonus) || 0,
+        deductions: parseFloat(newSalaryData.deductions) || 0
       };
 
       const response = await post('/api/employee-salaries', salaryData);
@@ -587,13 +587,14 @@ export default function SalaryManagement() {
   // Handle expenses modal close
   const handleExpensesModalClose = () => {
     setExpensesModalOpen(false);
-    setNewExpense({ description: '', amount: 0 });
+    setNewExpense({ description: '', amount: '' });
     setEditingExpense(null);
   };
 
   // Handle add expense
   const handleAddExpense = async () => {
-    if (!newExpense.description.trim() || parseFloat(newExpense.amount) < 0) {
+    const amount = parseFloat(newExpense.amount) || 0;
+    if (!newExpense.description.trim() || amount < 0) {
       toast.error('Please provide valid description and amount (>= 0)', {
         position: "top-right",
         autoClose: 3000,
@@ -604,7 +605,7 @@ export default function SalaryManagement() {
     try {
       const expenseData = {
         description: newExpense.description.trim(),
-        amount: parseFloat(newExpense.amount),
+        amount: amount,
         month: selectedMonth,
         year: selectedYear
       };
@@ -616,7 +617,7 @@ export default function SalaryManagement() {
         autoClose: 2000,
       });
 
-      setNewExpense({ description: '', amount: 0 });
+      setNewExpense({ description: '', amount: '' });
       loadExpenses();
     } catch (error) {
       toast.error('Failed to add expense', {
@@ -631,13 +632,14 @@ export default function SalaryManagement() {
     setEditingExpense(expense);
     setNewExpense({
       description: expense.description,
-      amount: expense.amount
+      amount: expense.amount?.toString() || ''
     });
   };
 
   // Handle update expense
   const handleUpdateExpense = async () => {
-    if (!editingExpense || !newExpense.description.trim() || parseFloat(newExpense.amount) < 0) {
+    const amount = parseFloat(newExpense.amount) || 0;
+    if (!editingExpense || !newExpense.description.trim() || amount < 0) {
       toast.error('Please provide valid description and amount (>= 0)', {
         position: "top-right",
         autoClose: 3000,
@@ -648,7 +650,7 @@ export default function SalaryManagement() {
     try {
       const updateData = {
         description: newExpense.description.trim(),
-        amount: parseFloat(newExpense.amount)
+        amount: amount
       };
 
       await put(`/api/expenses/${editingExpense.id}`, updateData);
@@ -659,7 +661,7 @@ export default function SalaryManagement() {
       });
 
       setEditingExpense(null);
-      setNewExpense({ description: '', amount: 0 });
+      setNewExpense({ description: '', amount: '' });
       loadExpenses();
     } catch (error) {
       toast.error('Failed to update expense', {
@@ -1599,13 +1601,27 @@ export default function SalaryManagement() {
               <Grid item xs={12}>
                 <TextField
                   label="Basic Salary"
-                  type="number"
+                  type="text"
                   fullWidth
-                  value={selectedSalary?.basic_salary || 0}
-                  onChange={(e) => setSelectedSalary(prev => ({
-                    ...prev,
-                    basic_salary: parseFloat(e.target.value) || 0
-                  }))}
+                  value={selectedSalary?.basic_salary || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow empty string, numbers, and decimal point
+                    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                      setSelectedSalary(prev => ({
+                        ...prev,
+                        basic_salary: value
+                      }));
+                    }
+                  }}
+                  onBlur={(e) => {
+                    // Convert to number on blur, default to 0 if empty
+                    const numValue = parseFloat(e.target.value) || 0;
+                    setSelectedSalary(prev => ({
+                      ...prev,
+                      basic_salary: numValue.toString()
+                    }));
+                  }}
                   InputProps={{
                     startAdornment: <InputAdornment position="start">PKR</InputAdornment>
                   }}
@@ -1614,13 +1630,27 @@ export default function SalaryManagement() {
               <Grid item xs={12}>
                 <TextField
                   label="Bonus"
-                  type="number"
+                  type="text"
                   fullWidth
-                  value={selectedSalary?.bonus || 0}
-                  onChange={(e) => setSelectedSalary(prev => ({
-                    ...prev,
-                    bonus: parseFloat(e.target.value) || 0
-                  }))}
+                  value={selectedSalary?.bonus || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow empty string, numbers, and decimal point
+                    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                      setSelectedSalary(prev => ({
+                        ...prev,
+                        bonus: value
+                      }));
+                    }
+                  }}
+                  onBlur={(e) => {
+                    // Convert to number on blur, default to 0 if empty
+                    const numValue = parseFloat(e.target.value) || 0;
+                    setSelectedSalary(prev => ({
+                      ...prev,
+                      bonus: numValue.toString()
+                    }));
+                  }}
                   InputProps={{
                     startAdornment: <InputAdornment position="start">PKR</InputAdornment>
                   }}
@@ -1629,13 +1659,27 @@ export default function SalaryManagement() {
               <Grid item xs={12}>
                 <TextField
                   label="Deductions"
-                  type="number"
+                  type="text"
                   fullWidth
-                  value={selectedSalary?.deductions || 0}
-                  onChange={(e) => setSelectedSalary(prev => ({
-                    ...prev,
-                    deductions: parseFloat(e.target.value) || 0
-                  }))}
+                  value={selectedSalary?.deductions || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow empty string, numbers, and decimal point
+                    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                      setSelectedSalary(prev => ({
+                        ...prev,
+                        deductions: value
+                      }));
+                    }
+                  }}
+                  onBlur={(e) => {
+                    // Convert to number on blur, default to 0 if empty
+                    const numValue = parseFloat(e.target.value) || 0;
+                    setSelectedSalary(prev => ({
+                      ...prev,
+                      deductions: numValue.toString()
+                    }));
+                  }}
                   InputProps={{
                     startAdornment: <InputAdornment position="start">PKR</InputAdornment>
                   }}
@@ -1704,7 +1748,7 @@ export default function SalaryManagement() {
                       if (employee) {
                         setNewSalaryData(prev => ({
                           ...prev,
-                          basic_salary: employee.basic_salary || 0
+                          basic_salary: employee.basic_salary?.toString() || ''
                         }));
                       }
                     }}
@@ -1730,13 +1774,27 @@ export default function SalaryManagement() {
                   <Grid item xs={12}>
                     <TextField
                       label="Basic Salary"
-                      type="number"
+                      type="text"
                       fullWidth
                       value={newSalaryData.basic_salary}
-                      onChange={(e) => setNewSalaryData(prev => ({
-                        ...prev,
-                        basic_salary: parseFloat(e.target.value) || 0
-                      }))}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow empty string, numbers, and decimal point
+                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                          setNewSalaryData(prev => ({
+                            ...prev,
+                            basic_salary: value
+                          }));
+                        }
+                      }}
+                      onBlur={(e) => {
+                        // Convert to number on blur, default to 0 if empty
+                        const numValue = parseFloat(e.target.value) || 0;
+                        setNewSalaryData(prev => ({
+                          ...prev,
+                          basic_salary: numValue.toString()
+                        }));
+                      }}
                       InputProps={{
                         startAdornment: <InputAdornment position="start">PKR</InputAdornment>
                       }}
@@ -1745,13 +1803,27 @@ export default function SalaryManagement() {
                   <Grid item xs={12}>
                     <TextField
                       label="Bonus"
-                      type="number"
+                      type="text"
                       fullWidth
                       value={newSalaryData.bonus}
-                      onChange={(e) => setNewSalaryData(prev => ({
-                        ...prev,
-                        bonus: parseFloat(e.target.value) || 0
-                      }))}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow empty string, numbers, and decimal point
+                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                          setNewSalaryData(prev => ({
+                            ...prev,
+                            bonus: value
+                          }));
+                        }
+                      }}
+                      onBlur={(e) => {
+                        // Convert to number on blur, default to 0 if empty
+                        const numValue = parseFloat(e.target.value) || 0;
+                        setNewSalaryData(prev => ({
+                          ...prev,
+                          bonus: numValue.toString()
+                        }));
+                      }}
                       InputProps={{
                         startAdornment: <InputAdornment position="start">PKR</InputAdornment>
                       }}
@@ -1760,13 +1832,27 @@ export default function SalaryManagement() {
                   <Grid item xs={12}>
                     <TextField
                       label="Deductions"
-                      type="number"
+                      type="text"
                       fullWidth
                       value={newSalaryData.deductions}
-                      onChange={(e) => setNewSalaryData(prev => ({
-                        ...prev,
-                        deductions: parseFloat(e.target.value) || 0
-                      }))}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow empty string, numbers, and decimal point
+                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                          setNewSalaryData(prev => ({
+                            ...prev,
+                            deductions: value
+                          }));
+                        }
+                      }}
+                      onBlur={(e) => {
+                        // Convert to number on blur, default to 0 if empty
+                        const numValue = parseFloat(e.target.value) || 0;
+                        setNewSalaryData(prev => ({
+                          ...prev,
+                          deductions: numValue.toString()
+                        }));
+                      }}
                       InputProps={{
                         startAdornment: <InputAdornment position="start">PKR</InputAdornment>
                       }}
@@ -1830,13 +1916,27 @@ export default function SalaryManagement() {
               <Grid item xs={12} md={4}>
                 <TextField
                   label="Amount"
-                  type="number"
+                  type="text"
                   fullWidth
                   value={newExpense.amount}
-                  onChange={(e) => setNewExpense(prev => ({
-                    ...prev,
-                    amount: parseFloat(e.target.value) || 0
-                  }))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow empty string, numbers, and decimal point
+                    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                      setNewExpense(prev => ({
+                        ...prev,
+                        amount: value
+                      }));
+                    }
+                  }}
+                  onBlur={(e) => {
+                    // Convert to number on blur, default to 0 if empty
+                    const numValue = parseFloat(e.target.value) || 0;
+                    setNewExpense(prev => ({
+                      ...prev,
+                      amount: numValue.toString()
+                    }));
+                  }}
                   InputProps={{
                     startAdornment: <InputAdornment position="start">PKR</InputAdornment>
                   }}
@@ -1847,7 +1947,7 @@ export default function SalaryManagement() {
                   variant="contained"
                   onClick={editingExpense ? handleUpdateExpense : handleAddExpense}
                   fullWidth
-                  disabled={!newExpense.description.trim() || parseFloat(newExpense.amount) < 0}
+                  disabled={!newExpense.description.trim() || (parseFloat(newExpense.amount) || 0) < 0}
                 >
                   {editingExpense ? 'Update' : 'Add'}
                 </Button>
