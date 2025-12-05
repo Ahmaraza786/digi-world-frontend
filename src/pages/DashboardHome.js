@@ -75,6 +75,8 @@ const DashboardCards = React.memo(function DashboardCards(props) {
     amountPending,
     expensesAmount,
     salariesAmount,
+    withholdingTaxAmount,
+    totalGSTAmount,
     onTotalInvoicesClick,
     onPaidInvoicesClick,
     onUnpaidInvoicesClick,
@@ -179,6 +181,26 @@ const DashboardCards = React.memo(function DashboardCards(props) {
           loading={loading}
         />
       </Grid>
+      <Grid item xs={12} sm={6} lg={3}>
+        <MemoizedStatCard
+          title="Withholding Tax"
+          value={`PKR ${Number(withholdingTaxAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          interval="Selected range"
+          trend="neutral"
+          data={EMPTY_ARRAY}
+          loading={loading}
+        />
+      </Grid>
+      <Grid item xs={12} sm={6} lg={3}>
+        <MemoizedStatCard
+          title="Total GST"
+          value={`PKR ${Number(totalGSTAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          interval="Selected range"
+          trend="neutral"
+          data={EMPTY_ARRAY}
+          loading={loading}
+        />
+      </Grid>
     </Grid>
   );
 }, areCardsEqual);
@@ -195,6 +217,8 @@ function areCardsEqual(prev, next) {
     prev.amountPending === next.amountPending &&
     prev.expensesAmount === next.expensesAmount &&
     prev.salariesAmount === next.salariesAmount &&
+    prev.withholdingTaxAmount === next.withholdingTaxAmount &&
+    prev.totalGSTAmount === next.totalGSTAmount &&
     prev.onTotalInvoicesClick === next.onTotalInvoicesClick &&
     prev.onPaidInvoicesClick === next.onPaidInvoicesClick &&
     prev.onUnpaidInvoicesClick === next.onUnpaidInvoicesClick &&
@@ -271,6 +295,8 @@ function selectCardValues(summary) {
     amountPending: summary?.amounts?.purchaseOrders?.pending ?? 0,
     expensesAmount: summary?.expenses?.amount ?? 0,
     salariesAmount: summary?.salaries?.amount ?? 0,
+    withholdingTaxAmount: summary?.withholdingTax?.amount ?? 0,
+    totalGSTAmount: summary?.totalGST?.amount ?? 0,
   };
 }
 
