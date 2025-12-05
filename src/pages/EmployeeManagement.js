@@ -458,7 +458,7 @@ export default function EmployeeManagement() {
         const pictureValue = value || formData?.picture || selectedEmployee?.picture || null;
         return (
           <PictureUploadComponent 
-            key={`picture-${selectedEmployee?.id || 'new'}-${pictureValue || 'empty'}-${Date.now()}`}
+            key={`picture-${selectedEmployee?.id || 'new'}-${modalMode}`}
             value={pictureValue} 
             onChange={onChange} 
             isViewMode={isView}
@@ -500,7 +500,7 @@ export default function EmployeeManagement() {
       render: (value, onChange, isViewMode, formData) => (
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <DatePicker
-            key={value || 'empty'}
+            key={`date-${selectedEmployee?.id || 'new'}-${modalMode}`}
             label="Joining Date"
             value={value ? new Date(value) : null}
             onChange={(newValue) => {
