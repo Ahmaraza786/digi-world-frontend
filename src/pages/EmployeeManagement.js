@@ -29,6 +29,7 @@ import ReusableDataTable from '../components/ReusableData';
 import PageContainer from '../components/PageContainer';
 import DynamicModal from '../components/DynamicModel';
 import { useApi } from '../hooks/useApi';
+import { BASE_URL } from '../constants/Constants';
 import { Search, Clear, CloudUpload, Person, PhotoCamera, Delete } from '@mui/icons-material';
 
 const INITIAL_PAGE_SIZE = 10;
@@ -198,11 +199,11 @@ export default function EmployeeManagement() {
       
       let imageUrl = val.trim();
       if (imageUrl.startsWith('/uploads/')) {
-        // Relative path - construct full URL
-        imageUrl = `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001'}${imageUrl}`;
+        // Relative path - construct full URL using BASE_URL
+        imageUrl = `${BASE_URL}${imageUrl}`;
       } else if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('data:')) {
         // Assume it's a relative path without leading slash
-        imageUrl = `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001'}/${imageUrl}`;
+        imageUrl = `${BASE_URL}/${imageUrl}`;
       }
       return imageUrl;
     }, []);
