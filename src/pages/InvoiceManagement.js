@@ -828,7 +828,7 @@ React.useEffect(() => {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Select customer"
+                  label="Select purchaser"
                   placeholder="Type to search..."
                   size="small"
                   fullWidth
@@ -865,7 +865,7 @@ React.useEffect(() => {
           </Box>
         ) : (
           <TextField
-            label="Customer"
+            label="Purchaser"
             value={
               selectedCustomer 
                 ? `${selectedCustomer.customerName}${selectedCustomer.companyName ? ` (${selectedCustomer.companyName})` : ''}`
@@ -1600,7 +1600,7 @@ const PurchaseOrderSelectionComponent = React.memo(({
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Select customer"
+                  label="Select purchaser"
                   placeholder="Type to search..."
                   size="small"
                   fullWidth
@@ -1613,7 +1613,7 @@ const PurchaseOrderSelectionComponent = React.memo(({
             />
           ) : (
             <TextField
-              label="Customer"
+              label="Purchaser"
               value={formData.customer ? `${formData.customer.customerName}${formData.customer.companyName ? ` (${formData.customer.companyName})` : ''}` : ''}
               disabled
               fullWidth
@@ -1829,7 +1829,7 @@ const PurchaseOrderSelectionComponent = React.memo(({
             onChange={(e) => handleFieldChange('with_hold_tax', e.target.checked)}
             disabled={isViewMode}
           />
-          <Typography variant="body2">Withhold Tax</Typography>
+          <Typography variant="body2">With Gst</Typography>
         </Box>
 
         {/* Payment Fields - Show only if status is 'paid' */}
@@ -1908,7 +1908,7 @@ const PurchaseOrderSelectionComponent = React.memo(({
     return [
     {
       name: 'customer',
-      label: 'Customer',
+      label: 'Purchaser',
       type: 'custom',
       required: true,
       validate: validateCustomer,
@@ -2011,11 +2011,11 @@ const PurchaseOrderSelectionComponent = React.memo(({
     },
     {
       name: 'with_hold_tax',
-      label: 'Withhold Tax',
+      label: 'With Gst',
       type: 'checkbox',
       required: false,
       defaultValue: true,
-      tooltip: 'Check if tax should be withheld from this invoice'
+      tooltip: 'Check if GST should be applied to this invoice'
     },
     // Payment fields - always include but will be conditionally rendered
     {
@@ -2810,7 +2810,7 @@ const PurchaseOrderSelectionComponent = React.memo(({
       },
       {
         field: 'customer',
-        headerName: 'Customer',
+        headerName: 'Purchaser',
         width: 200,
         align: 'left',
         headerAlign: 'left',
@@ -3044,7 +3044,7 @@ const PurchaseOrderSelectionComponent = React.memo(({
       },
       {
         field: 'with_hold_tax',
-        headerName: 'Withhold Tax',
+        headerName: 'With Gst',
         width: 120,
         align: 'left',
         headerAlign: 'left',
@@ -3247,8 +3247,8 @@ const PurchaseOrderSelectionComponent = React.memo(({
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Customer Name"
-                    placeholder="Type customer name..."
+                    label="Purchaser Name"
+                    placeholder="Type purchaser name..."
                     size="small"
                     onKeyDown={handleCustomerNameKeyDown}
                     InputProps={{

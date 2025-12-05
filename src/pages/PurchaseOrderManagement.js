@@ -36,7 +36,7 @@ import PageContainer from '../components/PageContainer';
 import DynamicModal from '../components/DynamicModel';
 import { BASE_URL } from "../constants/Constants";
 import { useApi } from '../hooks/useApi';
-import { Add, Delete, Edit, Search, Clear, Visibility, AttachFile, CloudUpload, LocalShipping, History, Download } from '@mui/icons-material';
+import { Add, Delete, Edit, Search, Clear, Visibility, AttachFile, CloudUpload, LocalShipping, History, Download, FileDownload } from '@mui/icons-material';
 
 const INITIAL_PAGE_SIZE = 10;
 
@@ -385,6 +385,7 @@ export default function PurchaseOrderManagement() {
 
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
+  const [isExporting, setIsExporting] = React.useState(false);
   
   // Modal state
   const [modalOpen, setModalOpen] = React.useState(false);
@@ -883,7 +884,7 @@ export default function PurchaseOrderManagement() {
     return (
       <Box sx={{ mb: 2 }}>
         <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold' }}>
-          Customer
+          Purchaser
         </Typography>
         
         {!isViewMode ? (
@@ -899,7 +900,7 @@ export default function PurchaseOrderManagement() {
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Select customer"
+                label="Select purchaser"
                 placeholder="Type to search..."
                 size="small"
                 fullWidth
@@ -910,7 +911,7 @@ export default function PurchaseOrderManagement() {
           />
         ) : (
           <TextField
-            label="Customer"
+            label="Purchaser"
             value={
               selectedCustomer 
                 ? `${selectedCustomer.customerName}${selectedCustomer.companyName ? ` (${selectedCustomer.companyName})` : ''}`
@@ -1560,7 +1561,7 @@ export default function PurchaseOrderManagement() {
     },
     {
       name: 'customer',
-      label: 'Customer',
+      label: 'Purchaser',
       type: 'custom',
       required: true,
       validate: validateCustomer,
@@ -2111,6 +2112,60 @@ export default function PurchaseOrderManagement() {
     }
   }, [challanHistory]);
 
+  // Export material costs handler
+  const handleExportMaterialCosts = React.useCallback(async () => {
+    try {
+      setIsExporting(true);
+      
+      // Build query parameters with date range
+      const params = new URLSearchParams();
+      if (appliedDateRange.startDate) {
+        params.append('startDate', appliedDateRange.startDate);
+      }
+      if (appliedDateRange.endDate) {
+        params.append('endDate', appliedDateRange.endDate);
+      }
+      
+      // Get token for authentication
+      const token = localStorage.getItem('authToken');
+      
+      const response = await fetch(`${BASE_URL}/api/purchase-orders/export-costs?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      // Create blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `material-costs-export-${appliedDateRange.startDate}-to-${appliedDateRange.endDate}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Material costs exported successfully!', {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    } catch (error) {
+      console.error('Error exporting material costs:', error);
+      toast.error('Failed to export material costs', {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  }, [appliedDateRange]);
+
   // Search handlers for separate fields - non-blocking input
   const handlePurchaseOrderNoChange = React.useCallback((event) => {
     const value = event.target.value;
@@ -2426,7 +2481,7 @@ export default function PurchaseOrderManagement() {
       },
       {
         field: 'customer',
-        headerName: 'Customer',
+        headerName: 'Purchaser',
         width: 180,
         align: 'left',
         headerAlign: 'left',
@@ -2723,7 +2778,41 @@ export default function PurchaseOrderManagement() {
                 Apply
               </Button>
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={2}>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleExportMaterialCosts}
+                disabled={
+                  !appliedDateRange.startDate || !appliedDateRange.endDate || isExporting
+                }
+                fullWidth
+                sx={{ 
+                  height: '40px',
+                  background: 'linear-gradient(45deg, #10b981 30%, #059669 90%)',
+                  boxShadow: '0 3px 5px 2px rgba(16, 185, 129, .3)',
+                  color: '#ffffff',
+                  fontWeight: 'bold',
+                  textTransform: 'none',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #059669 30%, #047857 90%)',
+                    boxShadow: '0 4px 8px 2px rgba(16, 185, 129, .4)',
+                    transform: 'translateY(-1px)',
+                    transition: 'all 0.2s ease-in-out'
+                  },
+                  '&:disabled': {
+                    background: 'linear-gradient(45deg, #d1d5db 30%, #9ca3af 90%)',
+                    boxShadow: 'none',
+                    color: '#6b7280'
+                  },
+                  transition: 'all 0.2s ease-in-out'
+                }}
+                startIcon={isExporting ? <CircularProgress size={16} color="inherit" /> : <FileDownload />}
+              >
+                {isExporting ? 'Exporting...' : 'Export Costs'}
+              </Button>
+            </Grid>
+            <Grid item xs={12} sm={2}>
               <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
                 Range: {appliedDateRange.startDate} to {appliedDateRange.endDate}
               </Typography>
@@ -2772,8 +2861,8 @@ export default function PurchaseOrderManagement() {
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Customer Name"
-                    placeholder="Type customer name..."
+                    label="Purchaser Name"
+                    placeholder="Type purchaser name..."
                     size="small"
                     onKeyDown={handleCustomerNameKeyDown}
                     InputProps={{

@@ -22,7 +22,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import EmailIcon from '@mui/icons-material/Email';
+import SendIcon from '@mui/icons-material/Send';
 import { GridToolbar } from '@mui/x-data-grid/internals';
 const INITIAL_PAGE_SIZE = 10;
 
@@ -183,7 +183,7 @@ const ReusableDataTable = ({
             actions.push(
               <GridActionsCellItem
                 key="send-email-item"
-                icon={<EmailIcon />}
+                icon={<SendIcon sx={{ color: '#10b981' }} />}
                 label="Send Email"
                 onClick={() => onSendEmail(row)}
               />

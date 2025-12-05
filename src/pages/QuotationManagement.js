@@ -30,7 +30,7 @@ import PageContainer from '../components/PageContainer';
 import DynamicModal from '../components/DynamicModel';
 import { BASE_URL } from "../constants/Constants";
 import { useApi } from '../hooks/useApi';
-import { Add, Delete, Edit, FileDownload, Search, Clear, Visibility, Email } from '@mui/icons-material';
+import { Add, Delete, Edit, FileDownload, Search, Clear, Visibility, Email, PictureAsPdf, Send } from '@mui/icons-material';
 
 const INITIAL_PAGE_SIZE = 10;
 
@@ -753,7 +753,7 @@ export default function QuotationManagement() {
     return (
       <Box sx={{ mb: 2 }}>
         <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold' }}>
-          Customer
+          Purchaser
         </Typography>
         
         {!isViewMode ? (
@@ -769,7 +769,7 @@ export default function QuotationManagement() {
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Select customer"
+                label="Select purchaser"
                 placeholder="Type to search..."
                 size="small"
                 fullWidth
@@ -780,7 +780,7 @@ export default function QuotationManagement() {
           />
         ) : (
           <TextField
-            label="Customer"
+            label="Purchaser"
             value={selectedCustomer ? `${selectedCustomer.customerName}${selectedCustomer.companyName ? ` (${selectedCustomer.companyName})` : ''}` : ''}
             disabled
             fullWidth
@@ -822,7 +822,7 @@ export default function QuotationManagement() {
     },
     {
       name: 'customer',
-      label: 'Customer',
+      label: 'Purchaser',
       type: 'custom',
       required: true,
       validate: validateCustomer,
@@ -1513,7 +1513,7 @@ export default function QuotationManagement() {
       },
       {
         field: 'customerName',
-        headerName: 'Customer',
+        headerName: 'Purchaser',
         width: 180,
         align: 'left',
         headerAlign: 'left',
@@ -2169,7 +2169,7 @@ export default function QuotationManagement() {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <Email sx={{ fontSize: 28 }} />
+              <Send sx={{ fontSize: 28 }} />
             </Box>
             <Box>
               <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 0.5 }}>
@@ -2308,7 +2308,7 @@ export default function QuotationManagement() {
           <Button 
             onClick={handleSendEmail}
             variant="contained"
-            startIcon={sendingEmail ? <CircularProgress size={20} color="inherit" /> : <Email />}
+            startIcon={sendingEmail ? <CircularProgress size={20} color="inherit" /> : <Send />}
             sx={{
               borderRadius: '8px',
               px: 4,

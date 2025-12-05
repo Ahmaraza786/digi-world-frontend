@@ -15,6 +15,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Avatar,
+  IconButton,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -27,7 +29,7 @@ import ReusableDataTable from '../components/ReusableData';
 import PageContainer from '../components/PageContainer';
 import DynamicModal from '../components/DynamicModel';
 import { useApi } from '../hooks/useApi';
-import { Search, Clear } from '@mui/icons-material';
+import { Search, Clear, CloudUpload, Person, PhotoCamera, Delete } from '@mui/icons-material';
 
 const INITIAL_PAGE_SIZE = 10;
 
@@ -36,7 +38,7 @@ export default function EmployeeManagement() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   
   // Check user permissions
   const canRead = user?.permissions?.employee?.includes('read') || false;
@@ -62,6 +64,10 @@ export default function EmployeeManagement() {
   // Delete confirmation dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [employeeToDelete, setEmployeeToDelete] = React.useState(null);
+
+  // Banks data
+  const [banks, setBanks] = React.useState([]);
+  const [loadingBanks, setLoadingBanks] = React.useState(false);
 
 
   // Search state
@@ -128,9 +134,338 @@ export default function EmployeeManagement() {
     return '';
   };
 
+  const validateCnic = (cnic) => {
+    if (cnic && cnic.length > 15) return 'CNIC must be 15 characters or less';
+    return '';
+  };
+
+  const validateBankAccount = (bankAccount) => {
+    if (bankAccount && bankAccount.length > 50) return 'Bank account number must be 50 characters or less';
+    return '';
+  };
+
+  // Load banks for dropdown
+  const loadBanks = React.useCallback(async () => {
+    setLoadingBanks(true);
+    try {
+      const bankData = await get('/api/banks/all');
+      
+      // Handle different response structures
+      let banksArray = [];
+      if (Array.isArray(bankData)) {
+        banksArray = bankData;
+      } else if (bankData && bankData.success && Array.isArray(bankData.banks)) {
+        // API returns: { success: true, banks: [...] }
+        banksArray = bankData.banks;
+      } else if (bankData && Array.isArray(bankData.data)) {
+        banksArray = bankData.data;
+      } else if (bankData && Array.isArray(bankData.banks)) {
+        banksArray = bankData.banks;
+      }
+      
+      setBanks(banksArray);
+    } catch (error) {
+      toast.error('Failed to load banks', {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      setBanks([]);
+    } finally {
+      setLoadingBanks(false);
+    }
+  }, [get]);
+
+  // Load banks when modal opens
+  React.useEffect(() => {
+    if (modalOpen && (modalMode === 'create' || modalMode === 'edit')) {
+      if (user && token) {
+        loadBanks();
+      }
+    }
+  }, [modalOpen, modalMode, loadBanks, user, token]);
+
+  // Custom Picture Upload Component
+  const PictureUploadComponent = ({ value, onChange, isViewMode }) => {
+    const [preview, setPreview] = React.useState(null);
+    const [imageError, setImageError] = React.useState(false);
+    const fileInputRef = React.useRef(null);
+
+    // Helper function to construct image URL
+    const constructImageUrl = React.useCallback((val) => {
+      if (!val || typeof val !== 'string' || val.trim() === '') {
+        return null;
+      }
+      
+      let imageUrl = val.trim();
+      if (imageUrl.startsWith('/uploads/')) {
+        // Relative path - construct full URL
+        imageUrl = `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001'}${imageUrl}`;
+      } else if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('data:')) {
+        // Assume it's a relative path without leading slash
+        imageUrl = `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001'}/${imageUrl}`;
+      }
+      return imageUrl;
+    }, []);
+
+    // Initialize preview from value
+    React.useEffect(() => {
+      setImageError(false); // Reset error state when value changes
+      
+      if (value) {
+        if (typeof value === 'string' && value.trim() !== '') {
+          // Existing picture URL from database
+          const imageUrl = constructImageUrl(value);
+          if (imageUrl) {
+            setPreview(imageUrl);
+          } else {
+            setPreview(null);
+          }
+        } else if (value instanceof File) {
+          // New file selected
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setPreview(reader.result);
+          };
+          reader.onerror = () => {
+            setPreview(null);
+            setImageError(true);
+          };
+          reader.readAsDataURL(value);
+        } else {
+          setPreview(null);
+        }
+      } else {
+        setPreview(null);
+      }
+    }, [value, constructImageUrl]);
+
+    const handleFileSelect = (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          toast.error('Please select an image file', {
+            position: "top-right",
+            autoClose: 3000,
+          });
+          return;
+        }
+        
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error('Image size must be less than 5MB', {
+            position: "top-right",
+            autoClose: 3000,
+          });
+          return;
+        }
+
+        onChange(file);
+      }
+    };
+
+    const handleClick = () => {
+      if (!isViewMode && fileInputRef.current) {
+        fileInputRef.current.click();
+      }
+    };
+
+    const handleRemove = (e) => {
+      e.stopPropagation();
+      if (!isViewMode) {
+        onChange(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+    };
+
+
+    return (
+      <Box sx={{ mb: 3, textAlign: 'center' }}>
+        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold', color: '#1976d2' }}>
+          Employee Picture
+        </Typography>
+        
+        <Box
+          onClick={handleClick}
+          sx={{
+            position: 'relative',
+            width: '200px',
+            height: '200px',
+            margin: '0 auto',
+            border: preview && !imageError ? 'none' : '3px dashed #1976d2',
+            borderRadius: '12px',
+            background: preview && !imageError
+              ? 'transparent'
+              : 'linear-gradient(135deg, #667eea15 0%, #764ba215 100%)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: isViewMode ? 'default' : 'pointer',
+            transition: 'all 0.3s ease',
+            overflow: 'hidden',
+            boxShadow: preview && !imageError ? '0 8px 24px rgba(0,0,0,0.15)' : '0 4px 12px rgba(0,0,0,0.1)',
+            '&:hover': !isViewMode && {
+              transform: 'translateY(-4px)',
+              boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
+              borderColor: '#1565c0',
+            }
+          }}
+        >
+          {preview ? (
+            <>
+              {imageError ? (
+                // Show placeholder if image failed to load
+                <Box
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: '#f5f5f5',
+                    borderRadius: '12px',
+                  }}
+                >
+                  <PhotoCamera sx={{ fontSize: 48, color: '#999', mb: 1 }} />
+                  <Typography variant="caption" sx={{ color: '#999' }}>
+                    Image unavailable
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: '#999', fontSize: '10px', mt: 0.5 }}>
+                    {preview.substring(preview.lastIndexOf('/') + 1)}
+                  </Typography>
+                </Box>
+              ) : (
+                <>
+                  <img
+                    src={preview}
+                    alt="Employee"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      borderRadius: '12px',
+                    }}
+                    onLoad={() => {
+                      setImageError(false);
+                    }}
+                    onError={(e) => {
+                      // Don't clear preview on error - keep the URL so user can see it
+                      // The error might be CORS or network related, but URL is valid
+                      setImageError(true);
+                      // Don't setPreview(null) - keep the URL
+                    }}
+                  />
+                  {!isViewMode && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0,0,0,0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        opacity: 0,
+                        transition: 'opacity 0.3s ease',
+                        borderRadius: '12px',
+                        '&:hover': {
+                          opacity: 1,
+                        }
+                      }}
+                    >
+                      <PhotoCamera sx={{ fontSize: 48, color: 'white' }} />
+                    </Box>
+                  )}
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <Avatar
+                sx={{
+                  width: 80,
+                  height: 80,
+                  bgcolor: '#1976d2',
+                  mb: 2
+                }}
+              >
+                <Person sx={{ fontSize: 48 }} />
+              </Avatar>
+              {!isViewMode && (
+                <>
+                  <CloudUpload sx={{ fontSize: 32, color: '#1976d2', mb: 1 }} />
+                  <Typography variant="body2" sx={{ color: '#666', fontWeight: 'bold' }}>
+                    Click to upload picture
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: '#999', mt: 0.5 }}>
+                    JPG, PNG, GIF, WEBP (Max 5MB)
+                  </Typography>
+                </>
+              )}
+              {isViewMode && (
+                <Typography variant="body2" sx={{ color: '#999', mt: 2 }}>
+                  No picture available
+                </Typography>
+              )}
+            </>
+          )}
+        </Box>
+
+        {preview && !isViewMode && (
+          <Button
+            onClick={handleRemove}
+            startIcon={<Delete />}
+            size="small"
+            color="error"
+            sx={{ mt: 2 }}
+          >
+            Remove Picture
+          </Button>
+        )}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          style={{ display: 'none' }}
+        />
+
+        {!isViewMode && (
+          <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#666' }}>
+            {preview ? 'Click on image to change' : 'Upload employee profile picture'}
+          </Typography>
+        )}
+      </Box>
+    );
+  };
 
   // Define employee form fields
   const getEmployeeFields = (isViewMode = false) => [
+    {
+      name: 'picture',
+      label: 'Employee Picture',
+      type: 'custom',
+      required: false,
+      render: (value, onChange, isView, formData) => {
+        // Ensure we use the value from formData if value is empty but formData has it
+        const pictureValue = value || formData?.picture || selectedEmployee?.picture || null;
+        return (
+          <PictureUploadComponent 
+            key={`picture-${selectedEmployee?.id || 'new'}-${pictureValue || 'empty'}-${Date.now()}`}
+            value={pictureValue} 
+            onChange={onChange} 
+            isViewMode={isView}
+          />
+        );
+      },
+    },
     {
       name: 'name',
       label: 'Employee Name',
@@ -138,6 +473,15 @@ export default function EmployeeManagement() {
       required: true,
       validate: validateName,
       tooltip: 'Full name of the employee'
+    },
+    {
+      name: 'cnic',
+      label: 'CNIC',
+      type: 'text',
+      required: false,
+      validate: validateCnic,
+      tooltip: 'Employee CNIC number (e.g., 12345-1234567-1)',
+      placeholder: 'XXXXX-XXXXXXX-X'
     },
     {
       name: 'designation',
@@ -201,6 +545,77 @@ export default function EmployeeManagement() {
       InputProps: {
         startAdornment: <InputAdornment position="start">PKR</InputAdornment>
       }
+    },
+    {
+      name: 'bank_id',
+      label: 'Bank Name',
+      type: 'custom',
+      required: false,
+      tooltip: 'Select bank for salary transfer',
+      render: (value, onChange, isViewMode) => (
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold' }}>
+            Bank Name
+          </Typography>
+          
+          {!isViewMode ? (
+            <FormControl fullWidth size="small">
+              <InputLabel>Select Bank</InputLabel>
+              <Select
+                value={value || ''}
+                onChange={(e) => onChange(e.target.value)}
+                label="Select Bank"
+                disabled={loadingBanks}
+              >
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                {banks && banks.length > 0 ? (
+                  banks.map((bank) => (
+                    <MenuItem key={bank.id} value={bank.id}>
+                      {bank.bank_name}
+                    </MenuItem>
+                  ))
+                ) : (
+                  !loadingBanks && (
+                    <MenuItem disabled>
+                      No banks available
+                    </MenuItem>
+                  )
+                )}
+              </Select>
+              {loadingBanks && (
+                <Typography variant="caption" sx={{ mt: 0.5, color: '#666' }}>
+                  Loading banks...
+                </Typography>
+              )}
+              {!loadingBanks && banks.length === 0 && (
+                <Typography variant="caption" sx={{ mt: 0.5, color: '#d32f2f' }}>
+                  No banks found. Please add banks first.
+                </Typography>
+              )}
+            </FormControl>
+          ) : (
+            <TextField
+              label="Bank Name"
+              value={
+                selectedEmployee?.bank?.bank_name || 'Not specified'
+              }
+              disabled
+              fullWidth
+              size="small"
+            />
+          )}
+        </Box>
+      ),
+    },
+    {
+      name: 'bank_account_number',
+      label: 'Bank Account Number',
+      type: 'text',
+      required: false,
+      validate: validateBankAccount,
+      tooltip: 'Employee bank account number for salary transfer'
     },
     {
       name: 'status',
@@ -312,7 +727,6 @@ export default function EmployeeManagement() {
       }
       
     } catch (loadError) {
-      console.error('Error loading employees:', loadError);
       setError(loadError.message || 'Failed to load employees');
       toast.error('Failed to load employees', {
         position: "top-right",
@@ -402,6 +816,10 @@ export default function EmployeeManagement() {
       designation: '',
       joining_date: '',
       basic_salary: '',
+      cnic: '',
+      bank_id: '',
+      bank_account_number: '',
+      picture: null,
       status: 'active'
     });
     setModalMode('create');
@@ -474,7 +892,6 @@ export default function EmployeeManagement() {
       }
       
     } catch (loadError) {
-      console.error('Error searching employees:', loadError);
       setError(loadError.message || 'Failed to search employees');
       toast.error('Failed to search employees', {
         position: "top-right",
@@ -533,20 +950,46 @@ export default function EmployeeManagement() {
 
     setIsLoading(true);
     try {
-      const submitData = {
-        name: formData.name,
-        designation: formData.designation || null,
-        joining_date: formData.joining_date || null,
-        basic_salary: parseFloat(formData.basic_salary),
-        status: formData.status
-      };
+      // Create FormData for file upload
+      const submitFormData = new FormData();
+      submitFormData.append('name', formData.name);
+      submitFormData.append('designation', formData.designation || '');
+      submitFormData.append('joining_date', formData.joining_date || '');
+      submitFormData.append('basic_salary', parseFloat(formData.basic_salary));
+      submitFormData.append('status', formData.status);
+      submitFormData.append('cnic', formData.cnic || '');
+      submitFormData.append('bank_account_number', formData.bank_account_number || '');
+      submitFormData.append('bank_id', formData.bank_id || '');
+      
+      // Handle picture file if present
+      if (formData.picture && formData.picture instanceof File) {
+        submitFormData.append('picture', formData.picture);
+      }
 
       let response;
+      const token = localStorage.getItem('authToken');
       
       if (modalMode === 'create') {
-        response = await post('/api/employees', submitData);
+        response = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001'}/api/employees`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: submitFormData
+        });
       } else {
-        response = await put(`/api/employees/${selectedEmployee.id}`, submitData);
+        response = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001'}/api/employees/${selectedEmployee.id}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: submitFormData
+        });
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save employee');
       }
 
       const successMessage = modalMode === 'create' 
@@ -679,6 +1122,70 @@ export default function EmployeeManagement() {
           </Typography>
         ),
       },
+      {
+        field: 'cnic',
+        headerName: 'CNIC',
+        width: 150,
+        align: 'left',
+        headerAlign: 'left',
+        renderCell: (params) => (
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              height: '100%',
+              lineHeight: 1.5
+            }}
+          >
+            {params.value || 'N/A'}
+          </Typography>
+        ),
+      },
+      // {
+      //   field: 'bank',
+      //   headerName: 'Bank Name',
+      //   width: 180,
+      //   align: 'left',
+      //   headerAlign: 'left',
+      //   valueGetter: (value, row) => {
+      //     return row?.bank?.bank_name || 'N/A';
+      //   },
+      //   renderCell: (params) => (
+      //     <Typography 
+      //       variant="body2" 
+      //       sx={{ 
+      //         display: 'flex', 
+      //         alignItems: 'center', 
+      //         height: '100%',
+      //         lineHeight: 1.5
+      //       }}
+      //     >
+      //       {params.row?.bank?.bank_name || 'N/A'}
+      //     </Typography>
+      //   ),
+      // },
+      // {
+      //   field: 'bank_account_number',
+      //   headerName: 'Bank Account',
+      //   width: 150,
+      //   align: 'left',
+      //   headerAlign: 'left',
+      //   renderCell: (params) => (
+      //     <Typography 
+      //       variant="body2" 
+      //       sx={{ 
+      //         display: 'flex', 
+      //         alignItems: 'center', 
+      //         height: '100%',
+      //         lineHeight: 1.5
+      //       }}
+      //     >
+      //       {params.value || 'N/A'}
+      //     </Typography>
+      //   ),
+      // },
+      // {
       {
         field: 'status',
         headerName: 'Status',
@@ -963,7 +1470,7 @@ export default function EmployeeManagement() {
         onClose={() => setModalOpen(false)}
         mode={modalMode}
         title={`${modalMode === 'create' ? 'Create' : modalMode === 'edit' ? 'Edit' : 'View'} Employee`}
-        initialData={selectedEmployee || {}}
+        initialData={selectedEmployee ? { ...selectedEmployee } : {}}
         fields={getEmployeeFields(modalMode === 'view')}
         onSubmit={handleModalSubmit}
         loading={isLoading}

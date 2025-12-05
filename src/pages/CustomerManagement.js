@@ -329,7 +329,7 @@ export default function CustomerManagement() {
   const getCustomerFields = (isViewMode = false) => [
     {
       name: 'customerName',
-      label: 'Customer Name',
+      label: 'Purchaser',
       type: 'text',
       required: true,
       readOnly: isViewMode,
@@ -740,7 +740,7 @@ export default function CustomerManagement() {
       // },
       {
         field: 'customerName',
-        headerName: 'Customer Name',
+        headerName: 'Purchaser',
         width: 180,
         align: 'left',
         headerAlign: 'left',

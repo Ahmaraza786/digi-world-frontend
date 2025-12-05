@@ -178,9 +178,29 @@ export default function TaxManagement() {
             <Grid item xs={12} md={6} key={tax.id}>
               <Card>
                 <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h6" component="h2">
-                      {tax.service_type.charAt(0).toUpperCase() + tax.service_type.slice(1)} Tax
+                  <Box 
+                    display="flex" 
+                    justifyContent="space-between" 
+                    alignItems="flex-start" 
+                    mb={2}
+                    sx={{ flexWrap: 'wrap', gap: 1 }}
+                  >
+                    <Typography 
+                      variant="h6" 
+                      component="h2"
+                      sx={{ 
+                        flex: 1, 
+                        minWidth: 0,
+                        wordBreak: 'break-word',
+                        lineHeight: 1.3
+                      }}
+                    >
+                      {tax.service_type === 'withhold_service' 
+                        ? 'Withhold Service Tax'
+                        : tax.service_type === 'withhold_material'
+                          ? 'Withhold Material Tax'
+                          : tax.service_type.charAt(0).toUpperCase() + tax.service_type.slice(1) + ' Tax'
+                      }
                     </Typography>
                     {canUpdate && (
                       <Button
@@ -188,6 +208,7 @@ export default function TaxManagement() {
                         startIcon={<Edit />}
                         onClick={() => handleEditClick(tax)}
                         size="small"
+                        sx={{ flexShrink: 0 }}
                       >
                         Edit
                       </Button>
@@ -220,7 +241,12 @@ export default function TaxManagement() {
       {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onClose={handleCancel} maxWidth="sm" fullWidth>
         <DialogTitle>
-          Edit Tax Percentage - {editingTax?.service_type?.charAt(0).toUpperCase() + editingTax?.service_type?.slice(1)}
+          Edit Tax Percentage - {editingTax?.service_type === 'withhold_service' 
+            ? 'Withhold Service'
+            : editingTax?.service_type === 'withhold_material'
+              ? 'Withhold Material'
+              : editingTax?.service_type?.charAt(0).toUpperCase() + editingTax?.service_type?.slice(1)
+          }
         </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
