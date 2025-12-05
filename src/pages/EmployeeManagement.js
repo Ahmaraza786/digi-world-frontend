@@ -967,29 +967,11 @@ export default function EmployeeManagement() {
       }
 
       let response;
-      const token = localStorage.getItem('authToken');
       
       if (modalMode === 'create') {
-        response = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001'}/api/employees`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          body: submitFormData
-        });
+        response = await post('/api/employees', submitFormData);
       } else {
-        response = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001'}/api/employees/${selectedEmployee.id}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          body: submitFormData
-        });
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save employee');
+        response = await put(`/api/employees/${selectedEmployee.id}`, submitFormData);
       }
 
       const successMessage = modalMode === 'create' 
