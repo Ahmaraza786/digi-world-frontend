@@ -955,18 +955,43 @@ export default function PurchaseOrderManagement() {
   // Custom Multi-File Upload Component
   const FileUploadComponent = ({ value, onChange, isViewMode, purchaseOrderId }) => {
     const [selectedFiles, setSelectedFiles] = React.useState([]);
+    const [filesToDelete, setFilesToDelete] = React.useState([]); // Track files to delete
     const [dragActive, setDragActive] = React.useState(false);
     const [loadingPresignedUrl, setLoadingPresignedUrl] = React.useState({});
+    const { del } = useApi();
 
+    // Reset deletion list when value changes (new modal/data loaded)
     React.useEffect(() => {
-      if (value && Array.isArray(value)) {
-        setSelectedFiles(value);
+      if (value && Array.isArray(value) && value.length > 0) {
+        // Check if this is a fresh load (all files have IDs, meaning they're from DB)
+        const allFromDB = value.every(file => file.id);
+        if (allFromDB && filesToDelete.length > 0) {
+          // Reset deletion list on fresh load
+          setFilesToDelete([]);
+        }
+      } else if (!value || (Array.isArray(value) && value.length === 0)) {
+        // Reset when value is cleared
+        setFilesToDelete([]);
+      }
+    }, [value]);
+
+    // Update selected files when value or deletion list changes
+    React.useEffect(() => {
+      if (value && Array.isArray(value) && value.length > 0) {
+        // Filter out files that are marked for deletion
+        const validFiles = value.filter(file => 
+          !filesToDelete.some(deletedId => 
+            (file.id && deletedId === file.id) || 
+            (file.file_id && deletedId === file.file_id)
+          )
+        );
+        setSelectedFiles(validFiles);
       } else if (value && !Array.isArray(value)) {
         setSelectedFiles([value]);
       } else {
         setSelectedFiles([]);
       }
-    }, [value]);
+    }, [value, filesToDelete]);
 
     const validateFile = (file) => {
       // Validate file type
@@ -1000,8 +1025,13 @@ export default function PurchaseOrderManagement() {
       if (validFiles.length > 0) {
         const newFiles = [...selectedFiles, ...validFiles];
         setSelectedFiles(newFiles);
-        onChange(newFiles);
+        // Pass files and deletion list to parent
+        if (onChange) {
+          onChange(newFiles, filesToDelete);
+        }
       }
+      // Reset input to allow selecting same file again
+      event.target.value = '';
     };
 
     const handleDrag = (e) => {
@@ -1027,21 +1057,51 @@ export default function PurchaseOrderManagement() {
       if (validFiles.length > 0) {
         const newFiles = [...selectedFiles, ...validFiles];
         setSelectedFiles(newFiles);
-        onChange(newFiles);
+        // Pass files and deletion list to parent
+        if (onChange) {
+          onChange(newFiles, filesToDelete);
+        }
       }
     };
 
     const removeFile = (index) => {
       if (isViewMode) return;
+      
+      const fileToRemove = selectedFiles[index];
       const newFiles = selectedFiles.filter((_, i) => i !== index);
-      setSelectedFiles(newFiles);
-      onChange(newFiles);
+      
+      // If it's an existing file from database (has an id), mark it for deletion
+      if (fileToRemove.id) {
+        const updatedDeleteList = [...filesToDelete, fileToRemove.id];
+        setFilesToDelete(updatedDeleteList);
+        setSelectedFiles(newFiles);
+        // Pass both remaining files and updated deletion list to parent
+        if (onChange) {
+          onChange(newFiles, updatedDeleteList);
+        }
+      } else {
+        // It's a new file (File object), just remove it
+        setSelectedFiles(newFiles);
+        if (onChange) {
+          onChange(newFiles, filesToDelete);
+        }
+      }
     };
 
     const clearAllFiles = () => {
       if (isViewMode) return;
+      
+      // Collect all file IDs to delete
+      const allFileIds = selectedFiles
+        .filter(file => file.id)
+        .map(file => file.id);
+      
+      const updatedDeleteList = [...filesToDelete, ...allFileIds];
+      setFilesToDelete(updatedDeleteList);
       setSelectedFiles([]);
-      onChange([]);
+      if (onChange) {
+        onChange([], updatedDeleteList);
+      }
     };
 
     const handleViewFile = async (fileId) => {
@@ -1052,11 +1112,14 @@ export default function PurchaseOrderManagement() {
         const response = await get(`/api/purchase-orders/${purchaseOrderId}/file-url/${fileId}`);
         
         if (response.success && response.presignedUrl) {
-          // Open the presigned URL in a new tab
+          // Open the file URL in a new tab
           window.open(response.presignedUrl, '_blank');
           
-          // Show success message with expiration info
-          toast.success(`File opened successfully! URL expires in ${Math.floor(response.expiresIn / 60)} minutes.`, {
+          // Show success message
+          const message = response.expiresIn 
+            ? `File opened successfully! URL expires in ${Math.floor(response.expiresIn / 60)} minutes.`
+            : 'File opened successfully!';
+          toast.success(message, {
             position: "top-right",
             autoClose: 5000,
             hideProgressBar: false,
@@ -1170,8 +1233,20 @@ export default function PurchaseOrderManagement() {
                       <AttachFile sx={{ mr: 1, color: '#1976d2' }} />
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                          {file.name}
+                          {file.file_name || file.name}
                         </Typography>
+                        {file.file_size && (
+                          <Typography variant="caption" color="textSecondary">
+                            {(() => {
+                              const size = file.file_size || file.size;
+                              if (size && size !== '0' && size !== 0) {
+                                const sizeInMB = Number(size) / 1024 / 1024;
+                                return `${sizeInMB.toFixed(2)} MB`;
+                              }
+                              return '';
+                            })()}
+                          </Typography>
+                        )}
                       </Box>
                     </Box>
                     <IconButton
@@ -1631,14 +1706,28 @@ export default function PurchaseOrderManagement() {
       label: 'Purchase Order Files',
       type: 'custom',
       required: false,
-      render: (value, onChange, isView) => (
-        <FileUploadComponent 
-          value={value} 
-          onChange={onChange} 
-          isViewMode={isView}
-          purchaseOrderId={selectedPurchaseOrder?.id}
-        />
-      ),
+      render: (value, onChange, isView, formData) => {
+        // Create a wrapper to handle both files and deletion list
+        const handleFileChange = (files, filesToDelete = []) => {
+          // Store files in the field
+          onChange(files);
+          // Store deletion list separately - we'll handle this in form submission
+          if (formData && filesToDelete.length > 0) {
+            // Store in a ref or state that we can access during submission
+            // For now, we'll store it in formData directly
+            formData._filesToDelete = filesToDelete;
+          }
+        };
+        
+        return (
+          <FileUploadComponent 
+            value={value} 
+            onChange={handleFileChange} 
+            isViewMode={isView}
+            purchaseOrderId={selectedPurchaseOrder?.id}
+          />
+        );
+      },
     }
   ];
 
@@ -2372,6 +2461,13 @@ export default function PurchaseOrderManagement() {
           if (file instanceof File) {
             submitFormData.append('purchase_order_files', file);
           }
+        });
+      }
+
+      // Add files to delete if present (for update mode)
+      if (modalMode === 'edit' && formData._filesToDelete && Array.isArray(formData._filesToDelete)) {
+        formData._filesToDelete.forEach((fileId) => {
+          submitFormData.append('files_to_delete[]', fileId);
         });
       }
 
