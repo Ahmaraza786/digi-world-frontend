@@ -126,7 +126,11 @@ export default function EmployeeManagement() {
 
   const validateBasicSalary = (salary) => {
     if (!salary) return 'Basic salary is required';
-    if (salary <= 0) return 'Basic salary must be greater than 0';
+    const salaryNum = parseFloat(salary);
+    if (isNaN(salaryNum)) return 'Basic salary must be a valid number';
+    if (salaryNum <= 0) return 'Basic salary must be greater than 0';
+    // Maximum value for DECIMAL(10, 2) is 99,999,999.99
+    if (salaryNum > 99999999.99) return 'Basic salary must be less than or equal to 99,999,999.99';
     return '';
   };
 
@@ -839,9 +843,14 @@ export default function EmployeeManagement() {
       type: 'number',
       required: true,
       validate: validateBasicSalary,
-      tooltip: 'Monthly basic salary',
+      tooltip: 'Monthly basic salary (Maximum: 99,999,999.99)',
       InputProps: {
         startAdornment: <InputAdornment position="start">PKR</InputAdornment>
+      },
+      inputProps: {
+        max: 99999999.99,
+        step: 0.01,
+        min: 0
       }
     },
     {
