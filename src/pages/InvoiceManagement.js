@@ -2909,6 +2909,34 @@ const PurchaseOrderSelectionComponent = React.memo(({
         ),
       },
       {
+        field: 'totalWithGST',
+        headerName: 'Gst Total',
+        width: 160,
+        align: 'left',
+        headerAlign: 'left',
+        renderCell: (params) => {
+          const totalWithGST = params.value || params.row.totalWithGST || 0;
+          const formattedPrice = typeof totalWithGST === 'number' 
+            ? totalWithGST.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            : (totalWithGST ? Number(totalWithGST).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00');
+          return (
+            <Typography 
+              variant="body2" 
+              fontWeight="bold" 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                height: '100%',
+                lineHeight: 1.5,
+                color: '#7b1fa2' // Purple color for GST amount
+              }}
+            >
+              PKR {formattedPrice}
+            </Typography>
+          );
+        },
+      },
+      {
         field: 'invoice_type',
         headerName: 'Type',
         width: 100,
@@ -2972,72 +3000,6 @@ const PurchaseOrderSelectionComponent = React.memo(({
                 size="small"
                 color={getStatusColor(params.value)}
               />
-            </Box>
-          );
-        },
-      },
-      {
-        field: 'description',
-        headerName: 'Description',
-        width: 200,
-        align: 'left',
-        headerAlign: 'left',
-        renderCell: (params) => {
-          const quotationTitle = params.row?.purchaseOrder?.quotation?.title || 
-                                 params.row?.quotation?.title || 
-                                 null;
-          const description = params.value || '';
-          
-          return (
-            <Box 
-              sx={{ 
-                maxWidth: '180px',
-                display: 'flex', 
-                alignItems: 'center', 
-                height: '100%',
-                lineHeight: 1.5
-              }}
-            >
-              <Box>
-                {quotationTitle && (
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      fontWeight: 'bold',
-                      mb: 0.5
-                    }}
-                  >
-                    {quotationTitle}
-                  </Typography>
-                )}
-                {description && (
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      fontSize: '0.75rem',
-                      color: 'text.secondary',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical'
-                    }}
-                  >
-                    {description}
-                  </Typography>
-                )}
-                {!quotationTitle && !description && (
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      fontStyle: 'italic',
-                      color: 'text.secondary'
-                    }}
-                  >
-                    No description
-                  </Typography>
-                )}
-              </Box>
             </Box>
           );
         },

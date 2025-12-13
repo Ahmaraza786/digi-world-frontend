@@ -1607,6 +1607,34 @@ export default function QuotationManagement() {
         },
       },
       {
+        field: 'totalWithGST',
+        headerName: 'Gst Total',
+        width: 160,
+        align: 'left',
+        headerAlign: 'left',
+        renderCell: (params) => {
+          const totalWithGST = params.value || params.row.totalWithGST || 0;
+          const formattedPrice = typeof totalWithGST === 'number' 
+            ? totalWithGST.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+            : (totalWithGST ? Number(totalWithGST).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : '0');
+          return (
+            <Typography 
+              variant="body2" 
+              fontWeight="bold" 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                height: '100%',
+                lineHeight: 1.5,
+                color: '#7b1fa2' // Purple color for GST amount
+              }}
+            >
+              PKR {formattedPrice}
+            </Typography>
+          );
+        },
+      },
+      {
         field: 'status',
         headerName: 'Status',
         width: 120,
