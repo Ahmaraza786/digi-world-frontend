@@ -17,6 +17,7 @@ import {
   MenuItem,
   Avatar,
   IconButton,
+  Grid,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -447,24 +448,320 @@ export default function EmployeeManagement() {
     );
   };
 
+  // CNIC Image Upload Component (reusing PictureUploadComponent logic)
+  const CnicImageUploadComponent = ({ value, onChange, isViewMode }) => {
+    const [preview, setPreview] = React.useState(null);
+    const [imageError, setImageError] = React.useState(false);
+    const fileInputRef = React.useRef(null);
+
+    // Helper function to construct image URL
+    const constructImageUrl = React.useCallback((val) => {
+      if (!val || typeof val !== 'string' || val.trim() === '') {
+        return null;
+      }
+      
+      let imageUrl = val.trim();
+      if (imageUrl.startsWith('/uploads/')) {
+        imageUrl = `${BASE_URL}${imageUrl}`;
+      } else if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('data:')) {
+        imageUrl = `${BASE_URL}/${imageUrl}`;
+      }
+      return imageUrl;
+    }, []);
+
+    // Initialize preview from value
+    React.useEffect(() => {
+      setImageError(false);
+      
+      if (value) {
+        if (typeof value === 'string' && value.trim() !== '') {
+          const imageUrl = constructImageUrl(value);
+          if (imageUrl) {
+            setPreview(imageUrl);
+          } else {
+            setPreview(null);
+          }
+        } else if (value instanceof File) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setPreview(reader.result);
+          };
+          reader.onerror = () => {
+            setPreview(null);
+            setImageError(true);
+          };
+          reader.readAsDataURL(value);
+        } else {
+          setPreview(null);
+        }
+      } else {
+        setPreview(null);
+      }
+    }, [value, constructImageUrl]);
+
+    const handleFileSelect = (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        if (!file.type.startsWith('image/')) {
+          toast.error('Please select an image file', {
+            position: "top-right",
+            autoClose: 3000,
+          });
+          return;
+        }
+        
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error('Image size must be less than 5MB', {
+            position: "top-right",
+            autoClose: 3000,
+          });
+          return;
+        }
+
+        onChange(file);
+      }
+    };
+
+    const handleClick = () => {
+      if (!isViewMode && fileInputRef.current) {
+        fileInputRef.current.click();
+      }
+    };
+
+    const handleRemove = (e) => {
+      e.stopPropagation();
+      if (!isViewMode) {
+        onChange(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+    };
+
+    return (
+      <Box sx={{ mb: 3, textAlign: 'center' }}>
+        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold', color: '#2e7d32' }}>
+          CNIC Image
+        </Typography>
+        
+        <Box
+          onClick={handleClick}
+          sx={{
+            position: 'relative',
+            width: '200px',
+            height: '200px',
+            margin: '0 auto',
+            border: preview && !imageError ? 'none' : '3px dashed #2e7d32',
+            borderRadius: '12px',
+            background: preview && !imageError
+              ? 'transparent'
+              : 'linear-gradient(135deg, #c8e6c915 0%, #a5d6a715 100%)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: isViewMode ? 'default' : 'pointer',
+            transition: 'all 0.3s ease',
+            overflow: 'hidden',
+            boxShadow: preview && !imageError ? '0 8px 24px rgba(0,0,0,0.15)' : '0 4px 12px rgba(0,0,0,0.1)',
+            '&:hover': !isViewMode && {
+              transform: 'translateY(-4px)',
+              boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
+              borderColor: '#1b5e20',
+            }
+          }}
+        >
+          {preview ? (
+            <>
+              {imageError ? (
+                <Box
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: '#f5f5f5',
+                    borderRadius: '12px',
+                  }}
+                >
+                  <PhotoCamera sx={{ fontSize: 48, color: '#999', mb: 1 }} />
+                  <Typography variant="caption" sx={{ color: '#999' }}>
+                    Image unavailable
+                  </Typography>
+                </Box>
+              ) : (
+                <>
+                  <img
+                    src={preview}
+                    alt="CNIC"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      borderRadius: '12px',
+                    }}
+                    onLoad={() => {
+                      setImageError(false);
+                    }}
+                    onError={(e) => {
+                      setImageError(true);
+                    }}
+                  />
+                  {!isViewMode && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0,0,0,0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        opacity: 0,
+                        transition: 'opacity 0.3s ease',
+                        borderRadius: '12px',
+                        '&:hover': {
+                          opacity: 1,
+                        }
+                      }}
+                    >
+                      <PhotoCamera sx={{ fontSize: 48, color: 'white' }} />
+                    </Box>
+                  )}
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <Avatar
+                sx={{
+                  width: 80,
+                  height: 80,
+                  bgcolor: '#2e7d32',
+                  mb: 2
+                }}
+              >
+                <Person sx={{ fontSize: 48 }} />
+              </Avatar>
+              {!isViewMode && (
+                <>
+                  <CloudUpload sx={{ fontSize: 32, color: '#2e7d32', mb: 1 }} />
+                  <Typography variant="body2" sx={{ color: '#666', fontWeight: 'bold' }}>
+                    Click to upload CNIC
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: '#999', mt: 0.5 }}>
+                    JPG, PNG, GIF, WEBP (Max 5MB)
+                  </Typography>
+                </>
+              )}
+              {isViewMode && (
+                <Typography variant="body2" sx={{ color: '#999', mt: 2 }}>
+                  No CNIC image available
+                </Typography>
+              )}
+            </>
+          )}
+        </Box>
+
+        {preview && !isViewMode && (
+          <Button
+            onClick={handleRemove}
+            startIcon={<Delete />}
+            size="small"
+            color="error"
+            sx={{ mt: 2 }}
+          >
+            Remove CNIC Image
+          </Button>
+        )}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          style={{ display: 'none' }}
+        />
+
+        {!isViewMode && (
+          <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#666' }}>
+            {preview ? 'Click on image to change' : 'Upload employee CNIC image'}
+          </Typography>
+        )}
+      </Box>
+    );
+  };
+
+  // Ref to store cnic_image onChange callback (outside function so it persists)
+  const cnicImageOnChangeRef = React.useRef(null);
+
   // Define employee form fields
-  const getEmployeeFields = (isViewMode = false) => [
+  const getEmployeeFields = (isViewMode = false) => {
+    return [
     {
       name: 'picture',
-      label: 'Employee Picture',
+      label: 'Employee Images',
       type: 'custom',
       required: false,
       render: (value, onChange, isView, formData) => {
-        // Ensure we use the value from formData if value is empty but formData has it
         const pictureValue = value || formData?.picture || selectedEmployee?.picture || null;
+        const cnicImageValue = formData?.cnic_image || selectedEmployee?.cnic_image || null;
+        
+        const handlePictureChange = (file) => {
+          onChange(file);
+        };
+        
+        const handleCnicImageChange = (file) => {
+          // Update formData directly for cnic_image
+          if (formData) {
+            formData.cnic_image = file;
+          }
+          // Also call the cnic_image onChange if available
+          if (cnicImageOnChangeRef.current) {
+            cnicImageOnChangeRef.current(file);
+          }
+          // Trigger a re-render by updating picture field (even with same value)
+          onChange(pictureValue);
+        };
+        
         return (
-          <PictureUploadComponent 
-            key={`picture-${selectedEmployee?.id || 'new'}-${modalMode}`}
-            value={pictureValue} 
-            onChange={onChange} 
-            isViewMode={isView}
-          />
+          <Box sx={{ mb: 3 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <CnicImageUploadComponent 
+                  key={`cnic-image-${selectedEmployee?.id || 'new'}-${modalMode}`}
+                  value={cnicImageValue} 
+                  onChange={handleCnicImageChange} 
+                  isViewMode={isView}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <PictureUploadComponent 
+                  key={`picture-${selectedEmployee?.id || 'new'}-${modalMode}`}
+                  value={pictureValue} 
+                  onChange={handlePictureChange} 
+                  isViewMode={isView}
+                />
+              </Grid>
+            </Grid>
+          </Box>
         );
+      },
+    },
+    {
+      name: 'cnic_image',
+      label: 'CNIC Image',
+      type: 'custom',
+      required: false,
+      render: (value, onChange, isView, formData) => {
+        // Store the onChange callback in ref so picture field can use it
+        cnicImageOnChangeRef.current = onChange;
+        // Don't render anything - handled in picture field above
+        return null;
       },
     },
     {
@@ -630,7 +927,8 @@ export default function EmployeeManagement() {
         { value: 'inactive', label: 'Inactive' }
       ]
     }
-  ];
+    ];
+  };
 
   // URL state synchronization
   const handlePaginationModelChange = React.useCallback(
@@ -821,6 +1119,7 @@ export default function EmployeeManagement() {
       bank_id: '',
       bank_account_number: '',
       picture: null,
+      cnic_image: null,
       status: 'active'
     });
     setModalMode('create');
@@ -965,6 +1264,11 @@ export default function EmployeeManagement() {
       // Handle picture file if present
       if (formData.picture && formData.picture instanceof File) {
         submitFormData.append('picture', formData.picture);
+      }
+      
+      // Handle CNIC image file if present
+      if (formData.cnic_image && formData.cnic_image instanceof File) {
+        submitFormData.append('cnic_image', formData.cnic_image);
       }
 
       let response;

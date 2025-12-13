@@ -77,6 +77,7 @@ const DashboardCards = React.memo(function DashboardCards(props) {
     salariesAmount,
     withholdingTaxAmount,
     totalGSTAmount,
+    totalActualCost,
     onTotalInvoicesClick,
     onPaidInvoicesClick,
     onUnpaidInvoicesClick,
@@ -201,6 +202,16 @@ const DashboardCards = React.memo(function DashboardCards(props) {
           loading={loading}
         />
       </Grid>
+      <Grid item xs={12} sm={6} lg={3}>
+        <MemoizedStatCard
+          title="Total Actual Cost (PO)"
+          value={`PKR ${Number(totalActualCost).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          interval="Selected range"
+          trend="neutral"
+          data={EMPTY_ARRAY}
+          loading={loading}
+        />
+      </Grid>
     </Grid>
   );
 }, areCardsEqual);
@@ -219,6 +230,7 @@ function areCardsEqual(prev, next) {
     prev.salariesAmount === next.salariesAmount &&
     prev.withholdingTaxAmount === next.withholdingTaxAmount &&
     prev.totalGSTAmount === next.totalGSTAmount &&
+    prev.totalActualCost === next.totalActualCost &&
     prev.onTotalInvoicesClick === next.onTotalInvoicesClick &&
     prev.onPaidInvoicesClick === next.onPaidInvoicesClick &&
     prev.onUnpaidInvoicesClick === next.onUnpaidInvoicesClick &&
@@ -297,6 +309,7 @@ function selectCardValues(summary) {
     salariesAmount: summary?.salaries?.amount ?? 0,
     withholdingTaxAmount: summary?.withholdingTax?.amount ?? 0,
     totalGSTAmount: summary?.totalGST?.amount ?? 0,
+    totalActualCost: summary?.totalActualCost?.amount ?? 0,
   };
 }
 
@@ -366,9 +379,23 @@ const DashboardHome = () => {
         params.append('startDate', appliedDateRange.startDate);
       if (appliedDateRange.endDate)
         params.append('endDate', appliedDateRange.endDate);
-      const data = await get(`/api/dashboard/summary?${params.toString()}`);
+      
+      // Fetch dashboard summary and total actual cost in parallel
+      const [summaryData, actualCostData] = await Promise.all([
+        get(`/api/dashboard/summary?${params.toString()}`),
+        get(`/api/purchase-orders/total-actual-cost?${params.toString()}`)
+      ]);
+      
+      // Merge the actual cost into the summary
+      const mergedData = {
+        ...summaryData,
+        totalActualCost: {
+          amount: actualCostData?.totalActualCost || 0
+        }
+      };
+      
       setSummary((prev) =>
-        JSON.stringify(prev) === JSON.stringify(data) ? prev : data
+        JSON.stringify(prev) === JSON.stringify(mergedData) ? prev : mergedData
       );
     } catch (error) {
       console.error('Error fetching dashboard summary:', error);
@@ -380,7 +407,8 @@ const DashboardHome = () => {
         purchaseOrders: { received: 0, pending: 0 },
         amounts: { purchaseOrders: { received: 0, pending: 0 } },
         expenses: { amount: 0 },
-        salaries: { amount: 0 }
+        salaries: { amount: 0 },
+        totalActualCost: { amount: 0 }
       });
     } finally {
       setLoading(false);

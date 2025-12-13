@@ -1154,11 +1154,11 @@ export default function QuotationManagement() {
     setQuotationToEmail(quotationData);
     // Use customer email if available, otherwise empty (user can fill in)
     const customerEmail = quotationData.customer?.email || '';
-    const companyName = quotationData.customer?.companyName || '';
+    const customerName = quotationData.customer?.customerName || 'Customer';
     
     setEmailFormData({
       recipientEmail: customerEmail,
-      message: `Dear ${companyName ? companyName + ' Team' : quotationData.customer?.customerName || 'Customer'},\n\nPlease find attached our quotation for your review.\n\nIf you need any further information or would like to discuss the details, please feel free to contact us.\n\nBest regards,\nDigital World Sales Team`
+      message: `Dear ${customerName},\n\nPlease find attached our quotation for your review.\n\nIf you need any further information or would like to discuss the details, please feel free to contact us.\n\nBest regards,\nDigital World Sales Team`
     });
     setEmailDialogOpen(true);
   }, [canRead]);
