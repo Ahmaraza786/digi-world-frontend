@@ -18,7 +18,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import ForgotPassword from './components/ForgotPassword';
 import AppTheme from './shared-theme/AppTheme';
 import ColorModeSelect from './shared-theme/ColorModeSelect';
-import { SitemarkIcon } from './components/Customicon';
 import { useAuth } from './auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from './hooks/useApi';
@@ -28,16 +27,17 @@ const Card = styled(MuiCard)(({ theme }) => ({
   flexDirection: 'column',
   alignSelf: 'center',
   width: '100%',
-  padding: theme.spacing(4),
-  gap: theme.spacing(2),
+  padding: theme.spacing(3),
+  gap: theme.spacing(1.5),
   margin: 'auto',
   backgroundColor: '#ffffff !important', // Force white background
   color: '#333333 !important', // Force dark text
   [theme.breakpoints.up('sm')]: {
-    maxWidth: '450px',
+    maxWidth: '420px',
   },
   boxShadow:
     'hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px',
+  borderRadius: '12px',
   // Force text colors for common text elements
   '& p, & h1, & h2, & h3, & h4, & h5, & h6, & span, & label': {
     color: '#333333 !important',
@@ -254,15 +254,44 @@ export default function SignIn(props) {
       <SignInContainer direction="column" justifyContent="space-between">
         {/* <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} /> */}
         <Card variant="outlined">
-          <SitemarkIcon />
+          <Box
+            sx={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              mb: 0,
+              '& img': {
+                width: '100%',
+                maxWidth: '318px',
+                maxHeight: '210px',
+                height: 'auto',
+                display: 'block',
+                objectFit: 'contain',
+                '@media (max-width: 600px)': {
+                  maxWidth: '250px',
+                  maxHeight: '165px',
+                },
+                '@media (max-width: 400px)': {
+                  maxWidth: '200px',
+                  maxHeight: '132px',
+                }
+              }
+            }}
+          >
+            <img
+              src="/latest_logo.svg"
+              alt="Digital World Logo"
+            />
+          </Box>
           <Typography
             component="h1"
-            variant="h4"
+            variant="h5"
             sx={{ 
               width: '100%', 
-              fontSize: 'clamp(2rem, 10vw, 2.15rem)',
+              fontSize: 'clamp(1.5rem, 8vw, 1.75rem)',
               color: '#333333 !important', // Force dark text for contrast on white background
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              mb: 0.5
             }}
           >
             Sign in
@@ -275,7 +304,7 @@ export default function SignIn(props) {
               display: 'flex',
               flexDirection: 'column',
               width: '100%',
-              gap: 2,
+              gap: 1.5,
             }}
           >
             <FormControl>
@@ -284,7 +313,7 @@ export default function SignIn(props) {
                 sx={{ 
                   color: '#333333 !important',
                   fontWeight: 500,
-                  mb: 1
+                  mb: 0.5
                 }}
               >
                 Email or Username
@@ -336,7 +365,7 @@ export default function SignIn(props) {
                 sx={{ 
                   color: '#333333 !important',
                   fontWeight: 500,
-                  mb: 1
+                  mb: 0.5
                 }}
               >
                 Password
@@ -409,6 +438,8 @@ export default function SignIn(props) {
           </Box>
           <Divider sx={{ 
             color: '#666666 !important',
+            mt: 1,
+            mb: 0.5,
             '&::before, &::after': {
               borderColor: 'rgba(0, 0, 0, 0.12) !important',
             },
