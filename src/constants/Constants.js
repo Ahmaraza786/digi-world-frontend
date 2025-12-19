@@ -1,5 +1,5 @@
 // Base URL configuration
-export const BASE_URL = 'http://72.60.110.5:5001';
+export const BASE_URL = 'https://app.digitalworld.pk/api';
 
 export const PERMISSIONS = [
   { id: 'create', name: 'Create' },
@@ -7,3 +7,4 @@ export const PERMISSIONS = [
   { id: 'update', name: 'Update' },
   { id: 'delete', name: 'Delete' },
 ];
+https://app.digitalworld.pk/api/
