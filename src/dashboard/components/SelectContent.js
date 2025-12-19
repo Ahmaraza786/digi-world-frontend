@@ -2,10 +2,6 @@ import * as React from 'react';
 import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import Avatar from '@mui/material/Avatar';
-import { 
-  BrushRounded,          
-} from '@mui/icons-material';
 
 const CompanyContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -22,25 +18,30 @@ const CompanyContainer = styled(Box)(({ theme }) => ({
   minHeight: 48, // Ensure consistent height
 }));
 
-const CompanyAvatar = styled(Avatar)(({ theme }) => ({
+const LogoContainer = styled(Box)(({ theme }) => ({
   width: 32,
   height: 32,
-  backgroundColor: theme.palette.mode === 'dark' ? '#1a1a1a' : '#2c2c2c',
-  color: '#ffffff',
-  fontSize: '1rem',
-  fontWeight: 600,
-  boxShadow: theme.palette.mode === 'dark' 
-    ? '0 2px 8px rgba(0,0,0,0.3)'
-    : '0 2px 4px rgba(0,0,0,0.15)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+  '& img': {
+    width: '100%',
+    height: '100%',
+    objectFit: 'contain',
+  },
 }));
 
-// Option 1: Paint Brush Icon (Recommended for Paint Company)
+// Company Branding with Logo
 export default function CompanyBranding() {
   return (
     <CompanyContainer>
-      <CompanyAvatar>
-        <BrushRounded sx={{ fontSize: '1.3rem' }} />
-      </CompanyAvatar>
+      <LogoContainer>
+        <img 
+          src="/header_inside.svg" 
+          alt="Digital World Logo"
+        />
+      </LogoContainer>
       <Box sx={{ minWidth: 0, flex: 1 }}>
         <Typography 
           variant="body2" 
