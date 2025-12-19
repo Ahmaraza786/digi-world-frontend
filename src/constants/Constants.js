@@ -7,4 +7,3 @@ export const PERMISSIONS = [
   { id: 'update', name: 'Update' },
   { id: 'delete', name: 'Delete' },
 ];
-https://app.digitalworld.pk/api/
