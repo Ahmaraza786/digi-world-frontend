@@ -205,15 +205,24 @@ export default function InvoiceManagement() {
   React.useEffect(() => {
     if (selectedPurchaseOrder) {
       console.log('🔄 Setting purchase order and description:', {
-        purchaseOrderDescription: selectedPurchaseOrder.description
+        purchaseOrderDescription: selectedPurchaseOrder.description,
+        currentInvoiceDescription: formData.description
       });
       
-      setFormData(prev => ({ 
-        ...prev, 
-        purchase_order: selectedPurchaseOrder,
-        // Set description once from purchase order, then user can edit freely
-        description: selectedPurchaseOrder.description || ''
-      }));
+      setFormData(prev => {
+        // Only set purchase order description if invoice description is empty
+        // Preserve existing invoice description in edit mode
+        const shouldUsePODescription = !prev.description || prev.description.trim() === '';
+        
+        return { 
+          ...prev, 
+          purchase_order: selectedPurchaseOrder,
+          // Only set description from purchase order if invoice description is empty
+          description: shouldUsePODescription 
+            ? (selectedPurchaseOrder.description || '') 
+            : prev.description
+        };
+      });
     }
   }, [selectedPurchaseOrder]);
 
