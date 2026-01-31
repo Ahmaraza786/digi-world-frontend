@@ -50,7 +50,10 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userData');
 
-     window.location.href = '/signin';
+    // Avoid full page reload when already on signin (e.g. wrong password)
+    if (typeof window !== 'undefined' && window.location.pathname !== '/signin') {
+      window.location.href = '/signin';
+    }
   };
 
   // Check if user has specific permission

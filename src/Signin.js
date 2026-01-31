@@ -190,7 +190,8 @@ export default function SignIn(props) {
         });
       }
     } catch (err) {
-      toast.error('An error occurred during login. Please try again.', {
+      const message = err.response?.data?.message || err.message || 'An error occurred during login. Please try again.';
+      toast.error(message, {
         position: "top-right",
         autoClose: 5000,
         hideProgressBar: false,
@@ -419,7 +420,7 @@ export default function SignIn(props) {
             >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </BlueButton>
-            <Link
+            {/* <Link
               component="button"
               type="button"
               onClick={handleClickOpen}
@@ -434,7 +435,7 @@ export default function SignIn(props) {
               disabled={isLoading}
             >
               Forgot your password?
-            </Link>
+            </Link> */}
           </Box>
           <Divider sx={{ 
             color: '#666666 !important',

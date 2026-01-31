@@ -44,8 +44,15 @@ class ApiService {
     try {
       const response = await fetch(`${this.baseURL}${endpoint}`, config);
       
-      // Handle unauthorized responses
+      // Handle unauthorized responses (skip for signin - wrong password is not session expiry)
       if (response.status === 401 || response.status === 403) {
+        const isSigninRequest = endpoint.includes('/auth/signin') || endpoint.includes('/signin');
+        if (isSigninRequest) {
+          const errorData = await response.json().catch(() => ({}));
+          const err = new Error(errorData.message || 'Invalid credentials');
+          err.response = { status: response.status, data: errorData };
+          throw err;
+        }
         this.handleUnauthorized();
         throw new Error('Authentication required');
       }
