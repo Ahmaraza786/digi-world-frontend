@@ -557,11 +557,11 @@ export default function SalaryManagement() {
     }
   };
 
-  // Load expenses for selected month/year
+  // Load expenses for selected month/year (API returns full array, no pagination)
   const loadExpenses = async () => {
     try {
       const response = await get(`/api/expenses?month=${selectedMonth}&year=${selectedYear}`);
-      const expensesList = response.content || [];
+      const expensesList = Array.isArray(response) ? response : (response?.content || []);
       setExpenses(expensesList);
       
       // Calculate summary
