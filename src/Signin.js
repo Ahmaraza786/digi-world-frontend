@@ -317,7 +317,7 @@ export default function SignIn(props) {
                   mb: 0.5
                 }}
               >
-                Email or Username for test pipeline
+                Email or Username for test pipeline final
               </FormLabel>
               <TextField
                 error={emailError}
@@ -448,7 +448,7 @@ export default function SignIn(props) {
               color: '#666666 !important',
             }
           }}>
-            Digital World
+            Digital World final test pipeline
           </Divider>
         </Card>
         
