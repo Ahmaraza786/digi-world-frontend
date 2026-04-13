@@ -317,7 +317,7 @@ export default function SignIn(props) {
                   mb: 0.5
                 }}
               >
-                Email or Username for test pipeline final
+                Email or Username
               </FormLabel>
               <TextField
                 error={emailError}
