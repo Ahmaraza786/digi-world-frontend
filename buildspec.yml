@@ -1,0 +1,19 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo "Installing dependencies..."
+      - npm install
+  build:
+    commands:
+      - echo "Building the project..."
+      - npm run build
+  post_build:
+    commands:
+      - echo "Deploying the project..."
+      - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DIST_ID --paths "/*"
+artifacts:
+  files:
+    - '**/*'
+  base-directory: build
