@@ -448,7 +448,7 @@ export default function SignIn(props) {
               color: '#666666 !important',
             }
           }}>
-            Digital World
+            Digital World test oauth
           </Divider>
         </Card>
         
